@@ -125,14 +125,14 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	protected void internalOnResume() {
-		if (DEBUG) Log.v(TAG, "internalOnResume:");
+		if (DEBUG) Log.v(TAG, "internalOnResume:" + mUSBMonitor);
 		if ((mUSBMonitor != null) && !mUSBMonitor.isRegistered()) {
 			mUSBMonitor.register();
 		}
 	}
 
 	protected void internalOnPause() {
-		if (DEBUG) Log.v(TAG, "internalOnPause:");
+		if (DEBUG) Log.v(TAG, "internalOnPause:" + mUSBMonitor);
 		try {
 			if ((mUSBMonitor != null) && mUSBMonitor.isRegistered()) {
 				mUSBMonitor.unregister();

@@ -20,6 +20,7 @@ import com.serenegiant.ncsdk.Movidius;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.utils.BuildCheck;
+import com.serenegiant.utils.HandlerThreadHandler;
 import com.serenegiant.utils.PermissionCheck;
 import com.serenegiant.uvc.CameraDialogV4;
 import com.serenegiant.uvc.ICameraDialogListener;
@@ -60,6 +61,8 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		mAsyncHandler = HandlerThreadHandler.createHandler("");
+		mWorkerThreadID = mAsyncHandler.getLooper().getThread().getId();
 		initView();
 		if (mUSBMonitor == null) {
 			mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
@@ -198,8 +201,12 @@ public class MainActivity extends AppCompatActivity
 	protected final synchronized void queueEvent(
 		final Runnable task, final long delayMillis) {
 
-//		if (DEBUG) Log.v(TAG, "queueEvent:task=" + task + ", delayMillis=" + delayMillis);
-		if ((task == null) || (mAsyncHandler == null)) return;
+		if (DEBUG) Log.v(TAG, "queueEvent:task=" + task + ", delayMillis=" + delayMillis);
+		if (task == null) return;
+		if (mAsyncHandler == null) {
+			Log.w(TAG, "queueEvent:already released?");
+			return;
+		}
 		try {
 			mAsyncHandler.removeCallbacks(task);
 			if (delayMillis > 0) {
@@ -210,7 +217,7 @@ public class MainActivity extends AppCompatActivity
 				mAsyncHandler.post(task);
 			}
 		} catch (final Exception e) {
-			// ignore
+			Log.w(TAG, e);
 		}
 	}
 
@@ -397,8 +404,13 @@ public class MainActivity extends AppCompatActivity
 	 */
 	private void tryOpenDevice(final boolean requestPermission, final long delayMillis) {
 		if (DEBUG) Log.v(TAG, "tryOpenDevice:mCameraState=" + mCameraState);
-		if (!mUSBMonitor.isRegistered()) return;
-		queueEvent(() -> handleTryOpen(requestPermission), delayMillis);
+		if (!mUSBMonitor.isRegistered()) {
+			Log.w(TAG, "unexpectedly USBMonitor is not registered.");
+			return;
+		}
+		queueEvent(() -> {
+			handleTryOpen(requestPermission);
+		}, delayMillis);
 	}
 
 	private final USBMonitor.OnDeviceConnectListener

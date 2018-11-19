@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity
 	protected void internalOnResume() {
 		if (DEBUG) Log.v(TAG, "internalOnResume:" + mUSBMonitor);
 		if ((mUSBMonitor != null) && !mUSBMonitor.isRegistered()) {
+			if (DEBUG) Log.v(TAG, "internalOnResume:register USBMonitor");
 			mUSBMonitor.register();
 		}
 	}
@@ -136,6 +137,7 @@ public class MainActivity extends AppCompatActivity
 		try {
 			if ((mUSBMonitor != null) && mUSBMonitor.isRegistered()) {
 				mUSBMonitor.unregister();
+				if (DEBUG) Log.v(TAG, "internalOnResume:unregister USBMonitor");
 			}
 		} catch (final Exception e) {
 			Log.w(TAG, e);
@@ -334,7 +336,7 @@ public class MainActivity extends AppCompatActivity
 	 * @param requestPermission
 	 */
 	protected void handleTryOpen(final boolean requestPermission) {
-//	    if (DEBUG) Log.v(TAG, "handleTryOpen:");
+	    if (DEBUG) Log.v(TAG, "handleTryOpen:");
 		synchronized (mSync) {
 			if (mCameraState == CAMERA_NON) {
 				mCameraState = CAMERA_TRYOPEN;
@@ -342,6 +344,7 @@ public class MainActivity extends AppCompatActivity
 				final int n = devices.size();
 				if ((n == 1)
 					&& (requestPermission || mUSBMonitor.hasPermission(devices.get(0))) ) {
+					if (DEBUG) Log.v(TAG, "handleTryOpen:requestPermission");
 					// 接続されているUVCカメラが1台だけでパーミッションが有るかパーミッション要求フラグがセットされていれば開く
 					final boolean result = mUSBMonitor.requestPermission(devices.get(0));
 					if (result) {

@@ -466,7 +466,7 @@ public class MainActivity extends AppCompatActivity
 				if ((mCameraState != CAMERA_NON)
 					&& (mMovidius != null) && mMovidius.equals(device)) {
 
-					close(true);
+					close(mMovidius.isBooted());
 				}
 			}	// synchronized (mCameraSync)
 		}

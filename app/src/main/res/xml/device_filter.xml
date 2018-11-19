@@ -11,4 +11,6 @@
     <usb-device class="239" subclass="2" />
 	<!-- Movidius Neural Compute Stick -->
 	<usb-device vendor-id="999" product-id="8528" />
+	<!-- Movidius Neural Compute Stick(USB boot後) -->
+	<usb-device vendor-id="999" product-id="63035" />
 </resources>

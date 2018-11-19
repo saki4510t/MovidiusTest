@@ -1,7 +1,11 @@
 package com.serenegiant.ncsdk;
 
 import android.content.Context;
+import android.hardware.usb.UsbConfiguration;
+import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RawRes;
@@ -15,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -169,11 +174,21 @@ public class Movidius {
 		return super.equals(obj);
 	}
 
+	public synchronized boolean isBooted() {
+		return (mCtrlBlock != null) && (mCtrlBlock.getProductId() == PID_MOVIDIUS_USB_BOOT);
+	}
+
+	private static final int PID_MOVIDIUS = 8528;
+	private static final int PID_MOVIDIUS_USB_BOOT = 63035;
+	
 	public synchronized void open(final USBMonitor.UsbControlBlock ctrlBlock) {
 		int result;
 		try {
 			mCtrlBlock = ctrlBlock.clone();
 			result = nativeConnect(mNativePtr, mCtrlBlock.getFileDescriptor());
+			if (mCtrlBlock.getProductId() == PID_MOVIDIUS) {
+				usbBoot(mCtrlBlock, R.raw.mvncapi);
+			}
 		} catch (final Exception e) {
 			result = -1;
 			Log.w(TAG, e);
@@ -189,9 +204,11 @@ public class Movidius {
 		}
 	}
 	
-	private void usbBoot(@RawRes final int mvcmd)
-		throws IllegalStateException, IllegalArgumentException {
+	private void usbBoot(@NonNull final USBMonitor.UsbControlBlock ctrlBlock,
+		@RawRes final int mvcmd)
+			throws IllegalStateException, IllegalArgumentException {
 
+		if (DEBUG) Log.v(TAG, "usbBoot:");
 		@NonNull
 		final Context context = requireContext();
 		final InputStream in = new BufferedInputStream(
@@ -223,11 +240,61 @@ public class Movidius {
 		}
 		if (out.size() > 0) {
 			final byte[] fw = out.toByteArray();
+			final int sendSize = fw.length;
 			if (DEBUG) Log.v(TAG, "usbBoot:" + Arrays.toString(fw));
-			// FIXME 未実装 ncsへの書き込み処理
+			final UsbEndpoint endpoint = findOutEndpoint(ctrlBlock);
+			if (endpoint != null) {
+				// FIXME 未実装 ncsへの書き込み処理
+				final int maxPacketSize = endpoint.getMaxPacketSize();
+				int offset = 0;
+				for (; offset < sendSize; ) {
+					int wb = sendSize - offset;
+					if (wb > maxPacketSize) {
+						wb = maxPacketSize;
+					}
+					final int writeBytes = ctrlBlock.bulkTransfer(endpoint, fw, offset, wb, 2000);
+					if (writeBytes <= 0) {
+						break;
+					}
+					offset += writeBytes;
+				}
+				if (DEBUG) Log.v(TAG,
+					String.format(Locale.US, "usbBoot:write %d/%d", offset, sendSize));
+			} else {
+				throw new IllegalArgumentException("specific device is not Movidius?");
+			}
 		} else {
 			throw new IllegalArgumentException("failed to read mvcmd file or empty");
 		}
+	}
+
+	@Nullable
+	private UsbEndpoint findOutEndpoint(@NonNull final USBMonitor.UsbControlBlock ctrlBlock) {
+		if (DEBUG) Log.v(TAG, "findOutEndpoint:");
+		UsbEndpoint result = null;
+		final UsbDevice device = ctrlBlock.getDevice();
+		if (device != null) {
+			final int numConfigs = device.getConfigurationCount();
+			for (int i = 0; i < numConfigs; i++) {
+				final UsbConfiguration config = device.getConfiguration(i);
+				final int numIntfs = config.getInterfaceCount();
+				for (int j = 0; j < numIntfs; j++) {
+					final UsbInterface intf = config.getInterface(j);
+					final int numEndpoints = intf.getEndpointCount();
+					for (int k = 0; k < numEndpoints; k++) {
+						final UsbEndpoint endpoint = intf.getEndpoint(k);
+						final int dir = endpoint.getDirection();
+						if (dir == UsbConstants.USB_DIR_OUT) {
+							result = endpoint;
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		if (DEBUG) Log.v(TAG, "findOutEndpoint:" + result);
+		return result;
 	}
 
 //================================================================================

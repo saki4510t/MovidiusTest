@@ -1,6 +1,7 @@
 package com.serenegiant.ncsdk;
 
 import android.content.Context;
+import android.hardware.usb.UsbDevice;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RawRes;
@@ -156,6 +157,16 @@ public class Movidius {
 			nativeDestroy(mNativePtr);
 			mNativePtr = 0;
 		}
+	}
+
+	@Override
+	public synchronized boolean equals(final Object obj) {
+		if (obj instanceof UsbDevice) {
+			return obj.equals(mCtrlBlock != null ? mCtrlBlock.getDevice() : null);
+		} else if (obj instanceof USBMonitor.UsbControlBlock) {
+			return obj.equals(mCtrlBlock);
+		}
+		return super.equals(obj);
 	}
 
 	public synchronized void open(final USBMonitor.UsbControlBlock ctrlBlock) {

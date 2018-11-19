@@ -232,7 +232,7 @@ public class Movidius {
 
 //================================================================================
 // ここから下はnative側で実装するはずのメソッド
-	private final native long nativeCreate();
+	private native long nativeCreate();
 	private native void nativeDestroy(long id_ncs);
 	private native int nativeConnect(final long id_ncs);
 	private native int nativeDisConnect(long id_ncs);

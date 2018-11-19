@@ -7,11 +7,10 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/.. \
-	$(LOCAL_PATH)/../../include \
-	$(LOCAL_PATH)/../../include/aandusb \
-	$(LOCAL_PATH)/../../include/common \
-	$(LOCAL_PATH)/../../include/imagehelper \
-	$(LOCAL_PATH)/../../include/rapidjson/include \
+	$(LOCAL_PATH)/../externalLibs/include \
+	$(LOCAL_PATH)/../externalLibs/include/aandusb \
+	$(LOCAL_PATH)/../externalLibs/include/common \
+	$(LOCAL_PATH)/../externalLibs/include/rapidjson/include \
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_C_INCLUDES)
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)

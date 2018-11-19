@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <!-- Movidius Neural Compute Stick -->
+	<usb-device vendor-id="999" product-id="8528" />
+</resources>

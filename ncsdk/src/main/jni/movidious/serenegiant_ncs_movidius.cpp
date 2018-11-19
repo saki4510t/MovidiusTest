@@ -18,6 +18,13 @@
 #include "utilbase.h"
 #include "common_utils.h"
 
+// core
+#include "core/context.h"
+#include "core/device.h"
+#include "core/descriptor.h"
+#include "core/interface.h"
+#include "core/transfer.h"
+// ncs
 #include "serenegiant_ncs_movidius.h"
 
 namespace serenegiant {
@@ -25,7 +32,8 @@ namespace usb {
 namespace ncs {
 
 Movidius::Movidius(jobject obj)
-:	movidius_obj(obj)
+:	movidius_obj(obj),
+	fd(0)
 {
 	ENTER();
 	
@@ -35,6 +43,11 @@ Movidius::Movidius(jobject obj)
 Movidius::~Movidius() {
 	ENTER();
 	
+	if (LIKELY(fd)) {
+		close(fd);
+		fd = 0;
+	}
+
 	EXIT();
 }
 
@@ -53,8 +66,9 @@ int Movidius::connect(const int &fd) {
 	ENTER();
 
 	// FIXME 未実装
+	this->fd = fd;
 
-	RETURN(-1, int);
+	RETURN(USB_SUCCESS, int);
 }
 
 int Movidius::disconnect() {
@@ -62,7 +76,12 @@ int Movidius::disconnect() {
 
 	// FIXME 未実装
 
-	RETURN(-1, int);
+	if (LIKELY(fd)) {
+		close(fd);
+		fd = 0;
+	}
+
+	RETURN(USB_SUCCESS, int);
 }
 
 }	// namespace ncs
@@ -142,7 +161,7 @@ static jint nativeDisconnect(JNIEnv *env, jobject thiz,
 static JNINativeMethod methods[] = {
 	{ "nativeCreate",		"()J", (void *) nativeCreate },
 	{ "nativeDestroy",		"(J)V", (void *) nativeDestroy },
-	{ "nativeConnect",		"(J)I", (void *) nativeConnect },
+	{ "nativeConnect",		"(JI)I", (void *) nativeConnect },
 	{ "nativeDisConnect",	"(J)I", (void *) nativeDisconnect },
 };
 

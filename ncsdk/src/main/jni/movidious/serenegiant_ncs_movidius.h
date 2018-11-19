@@ -14,6 +14,7 @@ namespace ncs {
 class Movidius {
 private:
 	jobject movidius_obj;
+	int fd;
 protected:
 public:
 	Movidius(jobject obj);

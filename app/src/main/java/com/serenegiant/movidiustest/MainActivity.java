@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity
 		if (mUSBMonitor == null) {
 			mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
 			final List<DeviceFilter> filters
-				= DeviceFilter.getDeviceFilters(this, R.xml.device_filter_exclude);
+				= DeviceFilter.getDeviceFilters(this, R.xml.device_filter);
 			mUSBMonitor.setDeviceFilter(filters);
 		}
 	}

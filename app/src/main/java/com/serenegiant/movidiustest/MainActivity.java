@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.serenegiant.dialog.MessageDialogFragmentV4;
+import com.serenegiant.ncsdk.Movidius;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.utils.BuildCheck;
@@ -50,8 +51,10 @@ public class MainActivity extends AppCompatActivity
 	private final long mUIThreadID = Thread.currentThread().getId();
 	private final Object mSync = new Object();
 
-	private USBMonitor mUSBMonitor;
 	private View mRootView;
+	private USBMonitor mUSBMonitor;
+	private Movidius mMovidius;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -306,7 +309,56 @@ public class MainActivity extends AppCompatActivity
 
 	private void close(final boolean canFinish) {
 		if (DEBUG) Log.v(TAG, "close:" + canFinish);
-		// FIXME 未実装
+		synchronized (mSync) {
+			if (mMovidius != null) {
+				final Movidius movidius = mMovidius;
+				mMovidius = null;
+				queueEvent(() -> {
+					movidius.release();
+					if (canFinish) {
+						runOnUiThread(() -> {
+							finish();
+						});
+					}
+				}, 0);
+			} else if (canFinish) {
+				runOnUiThread(() -> {
+					finish();
+				});
+			}
+		}
+	}
+
+	/**
+	 * カメラの選択要求
+	 * @param requestPermission
+	 */
+	protected void handleTryOpen(final boolean requestPermission) {
+//	    if (DEBUG) Log.v(TAG, "handleTryOpen:");
+		synchronized (mSync) {
+			if (mCameraState == CAMERA_NON) {
+				mCameraState = CAMERA_TRYOPEN;
+				final List<UsbDevice> devices = mUSBMonitor.getDeviceList();
+				final int n = devices.size();
+				if ((n == 1)
+					&& (requestPermission || mUSBMonitor.hasPermission(devices.get(0))) ) {
+					// 接続されているUVCカメラが1台だけでパーミッションが有るかパーミッション要求フラグがセットされていれば開く
+					final boolean result = mUSBMonitor.requestPermission(devices.get(0));
+					if (result) {
+						showMessage("USBホスト機能が無効です", Snackbar.LENGTH_INDEFINITE);
+					}
+				} else {
+					if (n > 1) {
+						CameraDialogV4.showDialog(this);
+						return;
+					}
+					mCameraState = CAMERA_NON;
+					if (n == 0) {
+						showMessage("カメラが見つかりません", Snackbar.LENGTH_INDEFINITE);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -329,12 +381,9 @@ public class MainActivity extends AppCompatActivity
 	 */
 	protected void updateConnectedCameras() {
 		if (DEBUG) Log.v(TAG, "updateConnectedCameras:");
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				final int n = (mUSBMonitor != null) ? mUSBMonitor.getDeviceCount() : 0;
-				showMessage("カメラが見つかりません", Snackbar.LENGTH_INDEFINITE);
-			}
+		queueEvent(() -> {
+			final int n = (mUSBMonitor != null) ? mUSBMonitor.getDeviceCount() : 0;
+			showMessage("カメラが見つかりません", Snackbar.LENGTH_INDEFINITE);
 		}, 0);
 	}
 
@@ -346,7 +395,7 @@ public class MainActivity extends AppCompatActivity
 	private void tryOpenDevice(final boolean requestPermission, final long delayMillis) {
 		if (DEBUG) Log.v(TAG, "tryOpenDevice:mCameraState=" + mCameraState);
 		if (!mUSBMonitor.isRegistered()) return;
-//		mCameraHandler.tryOpen(requestPermission, delayMillis);
+		queueEvent(() -> handleTryOpen(requestPermission), delayMillis);
 	}
 
 	private final USBMonitor.OnDeviceConnectListener
@@ -380,13 +429,16 @@ public class MainActivity extends AppCompatActivity
 			if (openDevice) {
 				// カメラをopen
 				try {
+					mMovidius = new Movidius(MainActivity.this);
 				} catch (final Exception e) {
 					synchronized (mSync) {
 						mCameraState = CAMERA_NON;
 					}	// synchronized (mCameraSync)
 					return;
 				}
-//				mCameraHandler.open(ctrlBlock);
+				queueEvent(() -> {
+					mMovidius.open(ctrlBlock);
+				}, 0);
 			}
 		}
 
@@ -396,9 +448,11 @@ public class MainActivity extends AppCompatActivity
 
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onDisconnect:");
 			synchronized (mSync) {
-//				if ((mCameraState != CAMERA_NON) && mCamera.isEqual(device)) {
-//					mCameraHandler.close(true);
-//				}
+				if ((mCameraState != CAMERA_NON)
+					&& (mMovidius != null) && mMovidius.equals(device)) {
+
+					close(true);
+				}
 			}	// synchronized (mCameraSync)
 		}
 

@@ -196,9 +196,11 @@ public class Movidius {
 		int result;
 		try {
 			mCtrlBlock = ctrlBlock.clone();
-			result = nativeConnect(mNativePtr, mCtrlBlock.getFileDescriptor());
 			if (mCtrlBlock.getProductId() == PID_MOVIDIUS) {
 				usbBoot(mCtrlBlock, R.raw.mvncapi);
+				result = 0;
+			} else {
+				result = nativeConnect(mNativePtr, mCtrlBlock.getFileDescriptor());
 			}
 		} catch (final Exception e) {
 			result = -1;
@@ -255,7 +257,7 @@ public class Movidius {
 			if (DEBUG) Log.v(TAG, "usbBoot:" + Arrays.toString(fw));
 			final UsbEndpoint endpoint = findOutEndpoint(ctrlBlock);
 			if (endpoint != null) {
-				// FIXME 未実装 ncsへの書き込み処理
+				// ncsへの書き込み処理
 				final int maxPacketSize = endpoint.getMaxPacketSize();
 				int offset = 0;
 				for (; offset < sendSize; ) {
@@ -271,6 +273,7 @@ public class Movidius {
 				}
 				if (DEBUG) Log.v(TAG,
 					String.format(Locale.US, "usbBoot:write %d/%d", offset, sendSize));
+				// ncsへの書き込みが終わると一旦切断されてから別のpidとして再接続される
 			} else {
 				throw new IllegalArgumentException("specific device is not Movidius?");
 			}

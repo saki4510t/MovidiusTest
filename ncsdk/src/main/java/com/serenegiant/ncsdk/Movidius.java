@@ -23,7 +23,7 @@ public class Movidius {
 	private static final String TAG = Movidius.class.getSimpleName();
 
 	private static boolean isLoaded;
-	public static synchronized void loadNative() {
+	static {
 		if (!isLoaded) {
 			System.loadLibrary("c++_shared");
 			System.loadLibrary("common");

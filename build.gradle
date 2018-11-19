@@ -1,0 +1,64 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+        
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+		maven { url 'http://raw.github.com/saki4510t/RecordingService/master/repository/' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+String getNdkBuildPath() {
+	Properties properties = new Properties()
+	properties.load(project.rootProject.file('local.properties').newDataInputStream())
+	def ndkBuildingDir = properties.getProperty("ndk.dir")
+	def ndkBuildPath = ndkBuildingDir
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		ndkBuildPath = ndkBuildingDir + '/ndk-build.cmd'
+	} else {
+		ndkBuildPath = ndkBuildingDir + '/ndk-build'
+	}
+	return ndkBuildPath
+}
+
+ext {
+	versionBuildTool = "28.0.3"
+	versionCompiler = 28
+	versionTarget = 27
+	javaSourceCompatibility = JavaVersion.VERSION_1_8
+	javaTargetCompatibility = JavaVersion.VERSION_1_8
+
+	// variable that can be referenced to keep support libs consistent
+	supportLibVersion = '28.0.0'
+	// gson
+	gsonVersion = '2.8.4'
+	// libcommon
+	commonLibVersion= '2.13.1'
+	// aandusb
+	aandusbLibVersion= '3.6.0'
+	// RecordingService
+	versionRecordingService = '0.3.0'
+
+	appVersionCode = 1
+	appVersionName = "0.0.0"
+}

@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 ######################################################################
-# libmovidious_static.a
+# libmovidius_static.a
 ######################################################################
 include $(CLEAR_VARS)
 
@@ -29,7 +29,7 @@ LOCAL_CFLAGS += -DLOG_NDEBUG						# デバッグメッセージを出さない�
 #LOCAL_CFLAGS += -Wno-multichar
 
 #public関数のみエクスポートする
-LOCAL_CFLAGS += -Wl,--version-script,movidious.map
+LOCAL_CFLAGS += -Wl,--version-script,movidius.map
 
 #最適化設定
 #LOCAL_CFLAGS += -DAVOID_TABLES
@@ -57,21 +57,21 @@ LOCAL_EXPORT_LDLIBS += -llog
 LOCAL_SHARED_LIBRARIES += common
 
 LOCAL_ARM_MODE := arm
-LOCAL_MODULE    := libmovidious_static
+LOCAL_MODULE    := libmovidius_static
 
 #スタティックライブラリとしてリンク
 include $(BUILD_STATIC_LIBRARY)
 
 
 ######################################################################
-# libmovidious.so
+# libmovidius.so
 ######################################################################
 include $(CLEAR_VARS)
 LOCAL_EXPORT_LDLIBS += -llog
 LOCAL_EXPORT_C_INCLUDES := \
 	$(LOCAL_PATH)/ \
 
-LOCAL_WHOLE_STATIC_LIBRARIES = libmovidious_static
-LOCAL_MODULE := libmovidious
+LOCAL_WHOLE_STATIC_LIBRARIES = libmovidius_static
+LOCAL_MODULE := libmovidius
 
 include $(BUILD_SHARED_LIBRARY)

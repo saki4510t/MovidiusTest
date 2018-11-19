@@ -151,7 +151,7 @@ int register_ncs_movidius(JNIEnv *env) {
 
 	// ネイティブメソッドを登録
 	if (registerNativeMethods(env,
-		"com/serenegiant/ncs/Movidius",
+		"com/serenegiant/ncsdk/Movidius",
 		methods, NUM_ARRAY_ELEMENTS(methods)) < 0) {
 		RETURN(-1, int);
 	}

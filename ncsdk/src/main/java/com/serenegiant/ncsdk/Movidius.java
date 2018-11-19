@@ -37,11 +37,22 @@ public class Movidius {
 		}
 	}
 
+// 最初に接続した時はこのUsbDeviceが来る
 //	UsbDevice[mName=/dev/bus/usb/001/002,mVendorId=999,mProductId=8528,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius Ltd.,mProductName=Movidius MA2X5X,mVersion=2.0,mSerialNumber=03e72150,mConfigurations=[
 //	    UsbConfiguration[mId=1,mName=null,mAttributes=128,mMaxPower=250,mInterfaces=[
 //	    UsbInterface[mId=0,mAlternateSetting=0,mName=null,mClass=255,mSubclass=17,mProtocol=255,mEndpoints=[
 //	    UsbEndpoint[mAddress=129,mAttributes=2,mMaxPacketSize=512,mInterval=0]
 //	    UsbEndpoint[mAddress=1,mAttributes=2,mMaxPacketSize=512,mInterval=0]]]]
+// MvNCAPI.mvcmdを書き込むと一旦切断されてからこのUsbDeviceが来る
+//	UsbDevice[mName=/dev/bus/usb/001/003,mVendorId=999,mProductId=63035,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius,mProductName=VSC Loopback Device,mVersion=2.16,mSerialNumber=DDB85DD564E710,mConfigurations=[
+//	    UsbConfiguration[mId=1,mName=null,mAttributes=192,mMaxPower=3,mInterfaces=[
+//	    UsbInterface[mId=0,mAlternateSetting=0,mName=Bulk Data,mClass=255,mSubclass=0,mProtocol=0,mEndpoints=[
+//	    UsbEndpoint[mAddress=1,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=129,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=2,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=130,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=3,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=131,mAttributes=2,mMaxPacketSize=512,mInterval=0]]]]
 
 	/** 未初期化 */
 	private static final int STATE_UNINITIALIZED	= 0x00000000;

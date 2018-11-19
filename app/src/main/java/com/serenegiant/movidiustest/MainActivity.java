@@ -332,7 +332,7 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	/**
-	 * カメラの選択要求
+	 * Movidiusの選択要求
 	 * @param requestPermission
 	 */
 	protected void handleTryOpen(final boolean requestPermission) {
@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity
 					}
 					mCameraState = CAMERA_NON;
 					if (n == 0) {
-						showMessage("カメラが見つかりません", Snackbar.LENGTH_INDEFINITE);
+						showMessage("Movidiusが見つかりません", Snackbar.LENGTH_INDEFINITE);
 					}
 				}
 			}

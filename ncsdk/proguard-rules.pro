@@ -19,3 +19,17 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keepclasseswithmembernames class * {
+    native <methods>;
+	*** mNativePtr;
+	*** mNativeValue;
+	*** mContext;
+}
+
+-keep public class com.serenegiant.ncs.Movidius {
+    native <methods>;
+	public *;
+	protected *;
+	private *;
+}

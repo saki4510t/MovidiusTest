@@ -32,11 +32,28 @@ android {
 		}
 	}
 
+	packagingOptions {
+		exclude '**/libc++_shared.so'
+		exclude '**/libcommon.so'
+	}
+
 	externalNativeBuild {
 		cmake {
 			path "CMakeLists.txt"
 		}
 	}
+}
+
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn ndkA
+}
+
+task ndkA(type: Copy) {
+	FileTree natives = zipTree(new File(project(':aandusb-aar').projectDir, "aandusb-${aandusbLibVersion}.aar"))
+	from natives
+	into 'src/main/cpp/externalLibs'
+	include ('**/libcommon.so', '**/**.h')
+	includeEmptyDirs = false
 }
 
 dependencies {
@@ -49,4 +66,6 @@ dependencies {
 	testImplementation 'junit:junit:4.12'
 	androidTestImplementation 'com.android.support.test:runner:1.0.2'
 	androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+	implementation project(':aandusb-aar')
 }

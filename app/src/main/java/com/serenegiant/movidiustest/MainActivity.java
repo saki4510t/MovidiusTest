@@ -322,6 +322,7 @@ public class MainActivity extends AppCompatActivity
 			if (mMovidius != null) {
 				final Movidius movidius = mMovidius;
 				mMovidius = null;
+				mCameraState = CAMERA_NON;
 				queueEvent(() -> {
 					movidius.release();
 					if (canFinish) {
@@ -419,6 +420,7 @@ public class MainActivity extends AppCompatActivity
 		@Override
 		public void onAttach(final UsbDevice device) {
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onAttach:");
+			cancelMessage();
 			synchronized (mSync) {
 				if (!updateCameraDialog()) {	// カメラダイアログを更新する(カメラダイアログが表示されて無ければfalseが返る)
 					if (mCameraState == CAMERA_NON) {
@@ -434,6 +436,7 @@ public class MainActivity extends AppCompatActivity
 			final USBMonitor.UsbControlBlock ctrlBlock, final boolean createNew) {
 
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onConnect:");
+			cancelMessage();
 			boolean openDevice = false;
 			synchronized (mSync) {
 				if (mCameraState == CAMERA_TRYOPEN) {

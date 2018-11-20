@@ -23,9 +23,9 @@ import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Movidius {
+public class UsbDataLink implements IDataLink {
 	private static final boolean DEBUG = true; // set false on production
-	private static final String TAG = Movidius.class.getSimpleName();
+	private static final String TAG = UsbDataLink.class.getSimpleName();
 
 	private static boolean isLoaded;
 	static {
@@ -93,7 +93,7 @@ public class Movidius {
 	 * コンストラクタ
 	 * @throws UnsupportedOperationException
 	 */
-	public Movidius(@NonNull final Context context)
+	public UsbDataLink(@NonNull final Context context)
 		throws UnsupportedOperationException {
 
 		setState(STATE_INITIALIZING);

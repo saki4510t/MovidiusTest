@@ -16,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.serenegiant.dialog.MessageDialogFragmentV4;
-import com.serenegiant.ncsdk.Movidius;
+import com.serenegiant.ncsdk.UsbDataLink;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.utils.BuildCheck;
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity
 
 	private View mRootView;
 	private USBMonitor mUSBMonitor;
-	private Movidius mMovidius;
+	private UsbDataLink mDataLink;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -319,12 +319,12 @@ public class MainActivity extends AppCompatActivity
 	private void close(final boolean canFinish) {
 		if (DEBUG) Log.v(TAG, "close:" + canFinish);
 		synchronized (mSync) {
-			if (mMovidius != null) {
-				final Movidius movidius = mMovidius;
-				mMovidius = null;
+			if (mDataLink != null) {
+				final UsbDataLink dataLink = mDataLink;
+				mDataLink = null;
 				mCameraState = CAMERA_NON;
 				queueEvent(() -> {
-					movidius.release();
+					dataLink.release();
 					if (canFinish) {
 						runOnUiThread(() -> {
 							finish();
@@ -447,7 +447,7 @@ public class MainActivity extends AppCompatActivity
 			if (openDevice) {
 				// カメラをopen
 				try {
-					mMovidius = new Movidius(MainActivity.this);
+					mDataLink = new UsbDataLink(MainActivity.this);
 				} catch (final Exception e) {
 					synchronized (mSync) {
 						mCameraState = CAMERA_NON;
@@ -455,7 +455,7 @@ public class MainActivity extends AppCompatActivity
 					return;
 				}
 				queueEvent(() -> {
-					mMovidius.open(ctrlBlock);
+					mDataLink.open(ctrlBlock);
 				}, 0);
 			}
 		}
@@ -467,9 +467,9 @@ public class MainActivity extends AppCompatActivity
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onDisconnect:");
 			synchronized (mSync) {
 				if ((mCameraState != CAMERA_NON)
-					&& (mMovidius != null) && mMovidius.equals(device)) {
+					&& (mDataLink != null) && mDataLink.equals(device)) {
 
-					close(mMovidius.isBooted());
+					close(mDataLink.isBooted());
 				}
 			}	// synchronized (mCameraSync)
 		}

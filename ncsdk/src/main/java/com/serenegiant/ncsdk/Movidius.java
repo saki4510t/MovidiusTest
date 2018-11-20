@@ -37,6 +37,12 @@ public class Movidius {
 		}
 	}
 
+	private static final int VID_MOVIDIUS = 0x03e7;
+	private static final int PID_MOVIDIUS = 0x2150; // ==8528; Myriad2v2 ROM
+	// Once opened in VSC mode, VID/PID change
+	private static final int VID_MOVIDIUS_USB_BOOT = VID_MOVIDIUS;
+	private static final int PID_MOVIDIUS_USB_BOOT = 0xf63b; // ==63035;
+
 // 最初に接続した時はこのUsbDeviceが来る
 //	UsbDevice[mName=/dev/bus/usb/001/002,mVendorId=999,mProductId=8528,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius Ltd.,mProductName=Movidius MA2X5X,mVersion=2.0,mSerialNumber=03e72150,mConfigurations=[
 //	    UsbConfiguration[mId=1,mName=null,mAttributes=128,mMaxPower=250,mInterfaces=[
@@ -189,17 +195,21 @@ public class Movidius {
 		return (mCtrlBlock != null) && (mCtrlBlock.getProductId() == PID_MOVIDIUS_USB_BOOT);
 	}
 
-	private static final int PID_MOVIDIUS = 8528;
-	private static final int PID_MOVIDIUS_USB_BOOT = 63035;
-	
-	public synchronized void open(final USBMonitor.UsbControlBlock ctrlBlock) {
-		int result;
+	public synchronized void open(
+		@NonNull final USBMonitor.UsbControlBlock ctrlBlock) {
+
+		int result = -1;
+		
 		try {
 			mCtrlBlock = ctrlBlock.clone();
-			if (mCtrlBlock.getProductId() == PID_MOVIDIUS) {
+			final int vid = mCtrlBlock.getVenderId();
+			final int pid = mCtrlBlock.getProductId();
+			if ((vid == VID_MOVIDIUS) && (pid == PID_MOVIDIUS)) {
 				usbBoot(mCtrlBlock, R.raw.mvncapi);
 				result = 0;
-			} else {
+			} else if ((vid == VID_MOVIDIUS_USB_BOOT)
+				&& (pid == PID_MOVIDIUS_USB_BOOT)) {
+
 				result = nativeConnect(mNativePtr, mCtrlBlock.getFileDescriptor());
 			}
 		} catch (final Exception e) {

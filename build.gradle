@@ -55,7 +55,7 @@ ext {
 	// libcommon
 	commonLibVersion= '2.13.1'
 	// aandusb
-	aandusbLibVersion= '3.6.0'
+	aandusbLibVersion= '3.7.0'
 	// RecordingService
 	versionRecordingService = '0.3.0'
 

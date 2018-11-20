@@ -7,6 +7,8 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/.. \
+	$(LOCAL_PATH)/../ncsdk/api/include \
+	$(LOCAL_PATH)/../ncsdk/api/src \
 	$(LOCAL_PATH)/../externalLibs/include \
 	$(LOCAL_PATH)/../externalLibs/include/aandusb \
 	$(LOCAL_PATH)/../externalLibs/include/common \

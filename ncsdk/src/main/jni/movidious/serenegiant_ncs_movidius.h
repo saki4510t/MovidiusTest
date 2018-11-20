@@ -14,7 +14,9 @@ namespace ncs {
 class Movidius {
 private:
 	jobject movidius_obj;
-	int fd;
+	Context context;
+	Descriptor descriptor;
+	Device *device;
 protected:
 public:
 	Movidius(jobject obj);

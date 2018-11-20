@@ -53,7 +53,7 @@ LOCAL_EXPORT_LDLIBS += -llog
 #静的リンクする外部モジュール
 
 #動的リンクする外部モジュール
-LOCAL_SHARED_LIBRARIES += common
+LOCAL_SHARED_LIBRARIES += common aandusb
 
 LOCAL_ARM_MODE := arm
 LOCAL_MODULE    := libmovidius_static

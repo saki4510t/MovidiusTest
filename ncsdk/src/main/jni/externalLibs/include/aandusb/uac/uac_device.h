@@ -23,7 +23,7 @@ namespace uac {
 class UACDevice : public Device {
 protected:
 public:
-	UACDevice(Context *_context, Descriptor *_descriptor, const char *dev_name, int fd);
+	UACDevice(Context *_context, Descriptor *_descriptor, const int &fd);
 	virtual ~UACDevice();
 };
 

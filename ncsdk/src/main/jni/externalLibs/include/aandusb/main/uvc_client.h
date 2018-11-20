@@ -52,10 +52,7 @@ public:
 	virtual ~UVCClient();
 	virtual void release(JNIEnv *env);
 
-	int connect(JNIEnv *env,
-		const char *dev_name,
-		const int &vid, const int &pid, const int &fd,
-		const bool &use_status_callback);
+	int connect(JNIEnv *env, const int &fd, const bool &use_status_callback);
 	int disconnect();
 	// JSON形式でカメラの現在のストリーム設定を返す
 	// 外部ストリームが有効ならば外部ストリーム設定を取得

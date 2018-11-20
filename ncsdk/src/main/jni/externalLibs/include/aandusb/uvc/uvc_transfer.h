@@ -42,7 +42,7 @@ public:
 	UVCTransfer(Device *_device,
 		const uint8_t &_endpoint,
 		const uint32_t &_stream_id,
-		UVCStream *_stream, const size_t &dwMaxPayloadTransferSize);
+		UVCStream *_stream, const size_t &max_payload_transfer_size);
 	virtual ~UVCTransfer();
 };
 

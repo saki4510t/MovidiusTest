@@ -31,15 +31,11 @@ class Device {
 friend class Context;
 friend class Interface;
 private:
-	/** デバイス名 */
-    char dev_name[64];
     /** ディスクリプタ */
     uint8_t desc[4096];
     /** ディスクリプタのバイト数 */
 	size_t desc_length;
     int fd;
-    /** 書き込み可能かどうかのフラグ */
-    bool writable;
     /** USB機器のcapabilityフラグ */
 	uint32_t caps;
 	/** 現在選択されているコンフィグレーション, 未選択なら-1 */
@@ -50,11 +46,6 @@ private:
 	std::vector<unsigned int> claimed_interface;	// FIXME これもConfig毎に保持しないとダメかも
 	/** 参照カウンタ */
 	int refCount;
-	/**
-	 * 書き込み可能でなければO_RDWRフラグを付けてopenし直す
-	 * @return 書き込み可能であればtrueを返す
-	 */
-	bool reopen_writable();
 	/**
 	 * エンドポイントへのストリームの割り当て・開放処理の実体
 	 * @param request USBDEVFS_ALLOC_STREAMSまたはUSBDEVFS_FREE_STREAMS
@@ -73,7 +64,7 @@ public:
 	/**
 	 * コンストラクタ
 	 */
-	Device(Context *_context, Descriptor *_descriptor, const char *dev_name, int fd);
+	Device(Context *_context, Descriptor *_descriptor, const int &fd);
 	/**
 	 * デストラクタ
 	 */
@@ -147,11 +138,6 @@ public:
 	 * NULL以外が返った時にはfreeすること
 	 */
 	char *get_serial();
-
-	/**
-	 * USB機器へ書き込み可能ならtrueを返す, falseならUSBのコンフィグレーションへのみアクセス可能
-	 */
-	inline bool is_writable() { return writable; };
 
 	/**
 	 * 参照カウンタをインクリメント

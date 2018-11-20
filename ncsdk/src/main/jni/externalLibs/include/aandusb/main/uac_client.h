@@ -41,7 +41,7 @@ public:
 	virtual ~UACClient();
 	void release(JNIEnv *env);
 
-	int connect(JNIEnv *env, const char *dev_name, int vid, int pid, int fd);
+	int connect(JNIEnv *env, const int &fd);
 	int disconnect();
 	// 指定したパスへディスクリプタ等を出力する
 	int output_descriptor(const char *path);

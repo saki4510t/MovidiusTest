@@ -33,7 +33,7 @@ namespace ncs {
 
 Movidius::Movidius(jobject obj)
 :	movidius_obj(obj),
-	fd(0)
+	device(NULL)
 {
 	ENTER();
 	
@@ -43,10 +43,8 @@ Movidius::Movidius(jobject obj)
 Movidius::~Movidius() {
 	ENTER();
 	
-	if (LIKELY(fd)) {
-		close(fd);
-		fd = 0;
-	}
+	disconnect();
+	context.release();	// XXX これは無くてもcontextが破棄される時にデストラクタから呼び出される
 
 	EXIT();
 }
@@ -65,10 +63,17 @@ void Movidius::release(JNIEnv *env) {
 int Movidius::connect(const int &fd) {
 	ENTER();
 
-	// FIXME 未実装
-	this->fd = fd;
+	usb_error_t result = USB_ERROR_BUSY;
+	device = new Device(&context, &descriptor, fd);
+	if (device && device->is_active()) {
+		// FIXME 未実装
+		result = USB_SUCCESS;
+	} else {
+		LOGE("could not find Movidius:err=%d", result);
+		SAFE_DELETE(device);
+	}
 
-	RETURN(USB_SUCCESS, int);
+	RETURN(result, int);
 }
 
 int Movidius::disconnect() {
@@ -76,10 +81,7 @@ int Movidius::disconnect() {
 
 	// FIXME 未実装
 
-	if (LIKELY(fd)) {
-		close(fd);
-		fd = 0;
-	}
+	SAFE_DELETE(device);
 
 	RETURN(USB_SUCCESS, int);
 }

@@ -66,8 +66,7 @@ public:
 	const pipeline_state_t get_state() const;
 	virtual int set_pipeline(IPipeline *pipeline);
 
-	int connect(const char *dev_name,
-		const int &vid, const int &pid, const int &fd,
+	int connect(const int &fd,
 		const uint32_t &max_buffer_num = FRAME_POOL_SZ,
 		const uint32_t &init_pool_num = MAX_FRAME_PREVIEW,
 		const size_t &default_frame_size = DEFAULT_FRAME_SZ,
@@ -77,25 +76,21 @@ public:
   		const bool &enable_capture_method = false,
 		const bool &use_status_callback = false);
 
-	inline int connect(const char *dev_name,
-		const int &vid, const int &pid, const int &fd,
+	inline int connect(const int &fd,
 		const uint32_t &max_buffer_num = FRAME_POOL_SZ,
 		const uint32_t &init_pool_num = MAX_FRAME_PREVIEW,
 		const size_t &default_frame_size = DEFAULT_FRAME_SZ,
 		const bool &use_status_callback = false) {
 
-		return connect(dev_name,
-			vid, pid, fd,
+		return connect(fd,
 			max_buffer_num, init_pool_num, default_frame_size,
 			0, NUM_TRANSFER_BUFS, DEFAULT_DCT_MODE, false, use_status_callback);
 	}
 
-	inline int connect(const char *dev_name,
-		const int &vid, const int &pid, const int &fd,
+	inline int connect(const int &fd,
 		const bool &use_status_callback = false) {
 
-		return connect(dev_name,
-			vid, pid, fd,
+		return connect(fd,
 			MAX_FRAME_PREVIEW, MAX_FRAME_PREVIEW, DEFAULT_FRAME_SZ,
 			0, NUM_TRANSFER_BUFS, DEFAULT_DCT_MODE, false, use_status_callback);
 	}

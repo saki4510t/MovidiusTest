@@ -35,6 +35,7 @@ android {
 	packagingOptions {
 		exclude '**/libc++_shared.so'
 		exclude '**/libcommon.so'
+		exclude '**/libaandusb.so'
 	}
 
 	externalNativeBuild {
@@ -52,7 +53,7 @@ task ndkA(type: Copy) {
 	FileTree natives = zipTree(new File(project(':aandusb-aar').projectDir, "aandusb-${aandusbLibVersion}.aar"))
 	from natives
 	into 'src/main/cpp/externalLibs'
-	include ('**/libcommon.so', '**/**.h')
+	include ('**/libcommon.so', '**/libaandusb.so', '**/**.h')
 	includeEmptyDirs = false
 }
 

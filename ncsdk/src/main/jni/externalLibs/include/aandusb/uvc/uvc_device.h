@@ -33,8 +33,7 @@ protected:
 	void dump_uvcx_video_config_probe_commit(
 			const uvcx_video_config_probe_commit_t &config);
 public:
-	UVCDevice(Context *_context, Descriptor *_descriptor,
-		const char *dev_name, const int &fd);
+	UVCDevice(Context *_context, Descriptor *_descriptor, const int &fd);
 	virtual ~UVCDevice();
 	int query_ctrl(streaming_control_t &ctrl, const uint8_t &interface_number, const bool &probe, const req_code_t &req);
 	int query_ctrl(video_still_control_t &ctrl, const uint8_t &interface_number, const bool &probe, const req_code_t &req);

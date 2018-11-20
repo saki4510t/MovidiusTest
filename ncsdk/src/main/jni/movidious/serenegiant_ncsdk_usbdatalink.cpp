@@ -25,7 +25,7 @@
 #include "core/interface.h"
 #include "core/transfer.h"
 // ncs
-#include "serenegiant_ncs_movidius.h"
+#include "serenegiant_ncsdk_usbdatalink.h"
 #include "usb_data_link.h"
 
 namespace serenegiant {

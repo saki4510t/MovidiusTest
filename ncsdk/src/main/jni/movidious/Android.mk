@@ -46,7 +46,7 @@ LOCAL_CFLAGS += -Wl,--version-script,movidius.map
 LOCAL_SRC_FILES := \
 	_onload.cpp \
 	usb_data_link.cpp \
-	serenegiant_ncs_movidius.cpp \
+	serenegiant_ncsdk_usbdatalink.cpp \
 
 LOCAL_EXPORT_LDLIBS += -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
 LOCAL_EXPORT_LDLIBS += -llog

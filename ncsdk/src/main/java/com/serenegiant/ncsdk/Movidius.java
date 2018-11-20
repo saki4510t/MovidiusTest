@@ -43,6 +43,7 @@ public class Movidius {
 	private static final int VID_MOVIDIUS_USB_BOOT = VID_MOVIDIUS;
 	private static final int PID_MOVIDIUS_USB_BOOT = 0xf63b; // ==63035;
 
+// [Movidius Neural Compute Stick]
 // 最初に接続した時はこのUsbDeviceが来る
 //	UsbDevice[mName=/dev/bus/usb/001/002,mVendorId=999,mProductId=8528,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius Ltd.,mProductName=Movidius MA2X5X,mVersion=2.0,mSerialNumber=03e72150,mConfigurations=[
 //	    UsbConfiguration[mId=1,mName=null,mAttributes=128,mMaxPower=250,mInterfaces=[
@@ -59,6 +60,14 @@ public class Movidius {
 //	    UsbEndpoint[mAddress=130,mAttributes=2,mMaxPacketSize=512,mInterval=0]
 //	    UsbEndpoint[mAddress=3,mAttributes=2,mMaxPacketSize=512,mInterval=0]
 //	    UsbEndpoint[mAddress=131,mAttributes=2,mMaxPacketSize=512,mInterval=0]]]]
+
+// [Neural Compute Stick 2]
+// 最初に接続した時はこのUsbDeviceが来る
+//	UsbDevice[mName=/dev/bus/usb/001/002,mVendorId=999,mProductId=9349,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius Ltd.,mProductName=Movidius MyriadX,mVersion=2.0,mSerialNumber=03e72485,mConfigurations=[
+//	    UsbConfiguration[mId=1,mName=null,mAttributes=128,mMaxPower=250,mInterfaces=[
+//	    UsbInterface[mId=0,mAlternateSetting=0,mName=null,mClass=255,mSubclass=17,mProtocol=255,mEndpoints=[
+//	    UsbEndpoint[mAddress=129,mAttributes=2,mMaxPacketSize=512,mInterval=0]
+//	    UsbEndpoint[mAddress=1,mAttributes=2,mMaxPacketSize=512,mInterval=0]]]]
 
 	/** 未初期化 */
 	private static final int STATE_UNINITIALIZED	= 0x00000000;

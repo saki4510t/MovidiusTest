@@ -26,248 +26,12 @@
 #include "core/transfer.h"
 // ncs
 #include "serenegiant_ncs_movidius.h"
+#include "usb_data_link.h"
 
 namespace serenegiant {
 namespace usb {
 namespace ncs {
 
-Movidius::Movidius(jobject obj)
-:	movidius_obj(obj),
-	device(NULL),
-	active(false)
-{
-	ENTER();
-	
-	EXIT();
-}
-
-Movidius::~Movidius() {
-	ENTER();
-	
-	disconnect();
-	context.release();	// XXX これは無くてもcontextが破棄される時にデストラクタから呼び出される
-
-	EXIT();
-}
-
-void Movidius::release(JNIEnv *env) {
-	ENTER();
-
-	if (movidius_obj) {
-		env->DeleteGlobalRef(movidius_obj);
-		movidius_obj = NULL;
-	}
-
-	EXIT();
-}
-
-int Movidius::connect(const int &fd) {
-	ENTER();
-
-	usb_error_t result = USB_ERROR_BUSY;
-	device = new Device(&context, &descriptor, fd);
-	if (device && device->is_active()) {
-		device->claim_interface(0);
-		active = true;
-		result = USB_SUCCESS;
-	} else {
-		LOGE("could not find Movidius:err=%d", result);
-		SAFE_DELETE(device);
-	}
-
-	RETURN(result, int);
-}
-
-int Movidius::disconnect() {
-	ENTER();
-
-	active = false;
-	if (device) {
-		device->release_interface(0, false);
-	}
-	SAFE_DELETE(device);
-
-	RETURN(USB_SUCCESS, int);
-}
-
-int Movidius::reset() {
-	ENTER();
-	
-	usbHeader_t header;
-	memset(&header, 0, sizeof(usbHeader_t));
-	header.cmd = USB_LINK_RESET_REQUEST;
-	int err = write(&header, sizeof(usbHeader_t));
-	if (UNLIKELY(err)) {
-		LOGE("write failed,err=%d", err);
-	}
-
-	RETURN(err, int);
-}
-
-int Movidius::get_status(myriadStatus_t &myriad_state) {
-	ENTER();
-	
-	usbHeader_t header;
-	memset(&header, 0, sizeof(usbHeader_t));
-	header.cmd = USB_LINK_GET_MYRIAD_STATUS;
-	int err = write(&header, sizeof(header));
-	if (LIKELY(!err)) {
-		err = read(&myriad_state, sizeof(myriadStatus_t));
-		if (UNLIKELY(err)) {
-			LOGE("read failed,err=%d", err);
-		}
-	} else {
-		LOGE("write failed,err=%d", err);
-	}
-
-	RETURN(err, int);
-}
-
-int Movidius::set_data(const char *name,
-	const void *data, const unsigned int &length,
-	const uint8_t &host_ready) {
-
-	ENTER();
-	
-	usbHeader_t header;
-	memset(&header, 0, sizeof(usbHeader_t));
-	header.cmd = USB_LINK_HOST_SET_DATA;
-	header.hostready = host_ready;
-	strcpy(header.name, name);
-	header.dataLength = length;
-	int err = write(&header, sizeof(usbHeader_t));
-	if (UNLIKELY(err)) {
-		LOGE("write failed, err=%d", err);
-		RETURN(err, int);
-	}
-	unsigned int operation_permit = 0xFFFF;
-	err = read(&operation_permit, sizeof(operation_permit));
-	if (UNLIKELY(err)) {
-		LOGE("read failed, err=%d", err);
-		RETURN(err, int);
-	}
-
-	if (operation_permit == 0xABCD) {
-		err = write(data, length);
-	} else {
-		err = USB_ERROR_BUSY;
-	}
-
-	RETURN(err, int);
-}
-
-int Movidius::get_data(const char *name,
-	void *data, const unsigned int &length, const unsigned int &offset,
-	const uint8_t &host_ready) {
-
-	ENTER();
-	
-	usbHeader_t header;
-	memset(&header, 0, sizeof(usbHeader_t));
-	header.cmd = USB_LINK_HOST_GET_DATA;
-	header.hostready = host_ready;
-	strcpy(header.name, name);
-	header.dataLength = length;
-	header.offset = offset;
-	int err = write(&header, sizeof(usbHeader_t));
-	if (UNLIKELY(err)) {
-		LOGE("write failed, err=%d", err);
-		RETURN(err, int);
-	}
-
-	unsigned int operation_permit = 0xFFFF;
-	err = read(&operation_permit, sizeof(operation_permit));
-	if (LIKELY(!err)) {
-		if (operation_permit == 0xABCD) {
-			err = read(data, length);
-		} else {
-			err = USB_ERROR_BUSY;
-		}
-	} else {
-		LOGE("read failed, err=%d", err);
-		RETURN(err, int);
-	}
-
-	RETURN(err, int);
-}
-
-int Movidius::reset_all() {
-	ENTER();
-	
-	// FIXME 未実装
-
-	RETURN(-1, int);
-}
-
-//================================================================================
-#define USB_ENDPOINT_IN 	0x81
-#define USB_ENDPOINT_OUT 	0x01
-#define USB_TIMEOUT 		10000
-#define USB_MAX_PACKET_SIZE	1024 * 1024 * 10
-
-/*private*/
-int Movidius::write(const void *data, const size_t &size) {
-	ENTER();
-	
-	int result = -1;
-	if (is_active()) {
-		size_t offset = 0;
-		uint8_t *buffer = (uint8_t *)data;
-		int wb;
-		for (; is_active() && (offset < size);) {
-			wb = (int)(size - offset);
-			if (wb > USB_MAX_PACKET_SIZE) {
-				wb = USB_MAX_PACKET_SIZE;
-			}
-			const int write_bytes = device->bulk_transfer_sync(
-				USB_ENDPOINT_OUT, buffer, wb, USB_TIMEOUT);
-			if (write_bytes <= 0) {
-				break;
-			}
-			offset += write_bytes;
-			buffer = buffer + write_bytes;
-		}
-		if (offset == size) {
-			result = USB_SUCCESS;
-		} else {
-			result = USB_ERROR_INTERRUPTED;
-		}
-	}
-
-	RETURN(result, int);
-}
-
-/*private*/
-int Movidius::read(void *data, const size_t &size) {
-	ENTER();
-	
-	int result = -1;
-	if (is_active()) {
-		size_t offset = 0;
-		uint8_t *buffer = (uint8_t *)data;
-		int rb;
-		for (; is_active() && (offset < size);) {
-			rb = (int)(size - offset);
-			if (rb > USB_MAX_PACKET_SIZE) {
-				rb = USB_MAX_PACKET_SIZE;
-			}
-			const int read_bytes = device->bulk_transfer_sync(
-				USB_ENDPOINT_IN, buffer, rb, USB_TIMEOUT);
-			if (read_bytes <= 0) {
-				break;
-			}
-			offset += read_bytes;
-			buffer = buffer + read_bytes;
-		}
-		if (offset == size) {
-			result = USB_SUCCESS;
-		} else {
-			result = USB_ERROR_INTERRUPTED;
-		}
-	}
-
-	RETURN(result, int);
-}
 
 }	// namespace ncs
 }	// namespace usb
@@ -284,8 +48,8 @@ static ID_TYPE nativeCreate(JNIEnv *env, jobject thiz) {
 
 	jobject obj = env->NewGlobalRef(thiz);
 	//
-	Movidius *ncs
-		= new Movidius(obj);
+	UsbDataLink *ncs
+		= new UsbDataLink(obj);
 	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(ncs));
 	LOGD("ncs=%p", ncs);
 
@@ -299,7 +63,7 @@ static void nativeDestroy(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	setField_long(env, thiz, "mNativePtr", 0);
-	Movidius *ncs = reinterpret_cast<Movidius *>(id_ncs);
+	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_ncs);
 	if (LIKELY(ncs)) {
 		ncs->release(env);
 		SAFE_DELETE(ncs);
@@ -315,7 +79,7 @@ static jint nativeConnect(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	int result = JNI_ERR;
-	Movidius *ncs = reinterpret_cast<Movidius *>(id_ncs);
+	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_ncs);
 	if (LIKELY(ncs && (fd > 0))) {
 		fd = dup(fd);	// Java側からcloseされてしまわないようにする
 		result = ncs->connect(fd);
@@ -331,7 +95,7 @@ static jint nativeDisconnect(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	int result = JNI_ERR;
-	Movidius *ncs = reinterpret_cast<Movidius *>(id_pipeline);
+	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_pipeline);
 	if (LIKELY(ncs)) {
 		result = ncs->disconnect();
 	}

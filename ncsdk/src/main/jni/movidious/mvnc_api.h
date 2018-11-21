@@ -45,7 +45,7 @@ public:
 	void *get_device(const size_t &ix);
 	
 	mvncStatus allocate_graph(
-		const void *device_handle, const void **graph_handle,
+		const void *device_handle, void **graph_handle,
 		const void *graph_file, unsigned int graph_file_length);
 	mvncStatus deallocate_graph(void *graph_handle);
 	mvncStatus set_graph_option(

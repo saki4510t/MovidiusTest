@@ -399,7 +399,7 @@ void *MvNcApi::get_device(const size_t &ix) {
 
 //======================================================================
 mvncStatus MvNcApi::allocate_graph(
-	const void *device_handle, const void **graph_handle,
+	const void *device_handle, void **graph_handle,
 	const void *graph_file, unsigned int graph_file_length) {
 
 	if (!device_handle || !graph_handle || !graph_file)

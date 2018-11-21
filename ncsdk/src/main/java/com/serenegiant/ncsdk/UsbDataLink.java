@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class UsbDataLink implements IDataLink {
+public class UsbDataLink extends NativeObject implements IDataLink {
 	private static final boolean DEBUG = true; // set false on production
 	private static final String TAG = UsbDataLink.class.getSimpleName();
 
@@ -69,24 +69,11 @@ public class UsbDataLink implements IDataLink {
 //	    UsbEndpoint[mAddress=129,mAttributes=2,mMaxPacketSize=512,mInterval=0]
 //	    UsbEndpoint[mAddress=1,mAttributes=2,mMaxPacketSize=512,mInterval=0]]]]
 
-	/** 未初期化 */
-	private static final int STATE_UNINITIALIZED	= 0x00000000;
-	/** 初期化中フラグ */
-	private static final int STATE_INITIALIZING		= 0x00000001;
-	/** 初期化済フラグ */
-	private static final int STATE_INITIALIZED		= 0x00000010;
 	/** NCSと接続中フラグ */
 	private static final int STATE_CONNECTING		= 0x00000100;
 	/** NCSと接続完了・使用可能フラグ */
 	private static final int STATE_CONNECTED		= 0x00000200;
 
-	private final ReentrantReadWriteLock mSensorLock = new ReentrantReadWriteLock();
-	private final Lock mReadLock = mSensorLock.readLock();
-	private final Lock mWriteLock = mSensorLock.writeLock();
-	private int mState = STATE_UNINITIALIZED;
-
-	private final WeakReference<Context> mWeakContext;
-	protected long mNativePtr;
 	protected USBMonitor.UsbControlBlock mCtrlBlock;
 	
 	/**
@@ -96,98 +83,15 @@ public class UsbDataLink implements IDataLink {
 	public UsbDataLink(@NonNull final Context context)
 		throws UnsupportedOperationException {
 
-		setState(STATE_INITIALIZING);
-		mWeakContext = new WeakReference<Context>(context);
-		mNativePtr = nativeCreate();
-		if (mNativePtr == 0) {
-			throw new UnsupportedOperationException();
-		}
-		setState(STATE_INITIALIZED);
+		super(context);
 	}
 	
+
+//================================================================================
 	@Override
-	protected void finalize() throws Throwable {
-		try {
-			release();
-		} finally {
-			super.finalize();
-		}
-	}
-
-//================================================================================
-	@NonNull
-	protected Context requireContext() throws IllegalStateException {
-		final Context context = mWeakContext.get();
-		if (context == null) {
-			throw new IllegalStateException("already released?");
-		}
-		return context;
-	}
-
-	@Nullable
-	protected Context getContext() {
-		return mWeakContext.get();
-	}
-
-	/**
-	 * 現在のステートを取得
-	 * @return
-	 */
-	protected int state() {
-		mReadLock.lock();
-		try {
-			return mState;
-		} finally {
-			mReadLock.unlock();
-		}
-	}
-
-	/**
-	 * ステートをセット
-	 * @param newState
-	 * @return ステートが変化した時はtrue
-	 */
-	protected boolean setState(final int newState) {
-		boolean changed;
-		mWriteLock.lock();
-		try {
-			changed = mState != newState;
-			mState = newState;
-		} finally {
-			mWriteLock.unlock();
-		}
-		return changed;
-	}
-
-	/**
-	 * 現在のステートにマスクを適用した後新しいステートを付加する
-	 * state = (state & mask) | newState
-	 * @param newState
-	 * @param mask
-	 * @return ステートが変化した時はtrue
-	 */
-	protected boolean setState(final int newState, final int mask) {
-		boolean changed;
-		mWriteLock.lock();
-		try {
-			final int state = mState & mask;
-			changed = state != newState;
-			if (changed) {
-				mState = state | newState;
-			}
-		} finally {
-			mWriteLock.unlock();
-		}
-		return changed;
-	}
-
-//================================================================================
 	public void release() {
 		close();
-		if (mNativePtr != 0) {
-			nativeDestroy(mNativePtr);
-			mNativePtr = 0;
-		}
+		super.release();
 	}
 
 	@Override
@@ -332,8 +236,11 @@ public class UsbDataLink implements IDataLink {
 
 //================================================================================
 // ここから下はnative側で実装するはずのメソッド
-	private native long nativeCreate();
-	private native void nativeDestroy(long id_ncs);
+	@Override
+	protected native long nativeCreate();
+	@Override
+	protected native void nativeDestroy(long id_ncs);
+
 	private native int nativeConnect(final long id_ncs, final int fd);
 	private native int nativeDisConnect(long id_ncs);
 }

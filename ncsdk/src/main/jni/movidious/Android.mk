@@ -8,6 +8,7 @@ include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/internal \
 	$(LOCAL_PATH)/.. \
+	$(LOCAL_PATH)/test \
 	$(LOCAL_PATH)/../externalLibs/include \
 	$(LOCAL_PATH)/../externalLibs/include/aandusb \
 	$(LOCAL_PATH)/../externalLibs/include/common \
@@ -50,6 +51,8 @@ LOCAL_SRC_FILES := \
 	mvnc_api.cpp \
 	serenegiant_ncsdk_mvncapi.cpp \
 	serenegiant_ncsdk_usbdatalink.cpp \
+	test/fp16.cpp \
+	test/multistick.cpp \
 
 LOCAL_EXPORT_LDLIBS += -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
 LOCAL_EXPORT_LDLIBS += -llog

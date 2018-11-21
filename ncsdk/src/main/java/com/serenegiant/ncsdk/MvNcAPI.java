@@ -10,6 +10,10 @@ public class MvNcAPI extends NativeObject {
 	private static final boolean DEBUG = true; // set false on production
 	private static final String TAG = MvNcAPI.class.getSimpleName();
 
+	static {
+		NativeLoader.loadNative();
+	}
+	
 	private final ReentrantReadWriteList<IDataLink>
 		mDataLinks = new ReentrantReadWriteList<>();
 

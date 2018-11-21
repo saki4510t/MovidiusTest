@@ -27,14 +27,8 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 	private static final boolean DEBUG = true; // set false on production
 	private static final String TAG = UsbDataLink.class.getSimpleName();
 
-	private static boolean isLoaded;
 	static {
-		if (!isLoaded) {
-			System.loadLibrary("c++_shared");
-			System.loadLibrary("common");
-			System.loadLibrary("movidius");
-			isLoaded = true;
-		}
+		NativeLoader.loadNative();
 	}
 
 	private static final int VID_MOVIDIUS = 0x03e7;

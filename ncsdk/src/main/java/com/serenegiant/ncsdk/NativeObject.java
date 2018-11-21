@@ -50,6 +50,10 @@ abstract class NativeObject {
 		}
 	}
 
+	public long getNativePtr() {
+		return mNativePtr;
+	}
+
 	@NonNull
 	protected Context requireContext() throws IllegalStateException {
 		final Context context = mWeakContext.get();

@@ -5,7 +5,7 @@
 #ifndef MOVIDIUSTEST_MVNC_API_H
 #define MOVIDIUSTEST_MVNC_API_H
 
-#include <list>
+#include <vector>
 
 // common
 #include "Mutex.h"
@@ -25,7 +25,7 @@ class Graph;
 class MvNcApi {
 private:
 	mutable Mutex lock;
-	std::list<struct Device *> devices;
+	std::vector<struct Device *> devices;
 	int log_level;
 	Device *find(const UsbDataLink *data_link);
 	bool is_device_exist(const Device *device);
@@ -41,7 +41,9 @@ public:
 	
 	int add(UsbDataLink *data_link);
 	int remove(UsbDataLink *data_link);
-
+	const size_t get_device_nums();
+	void *get_device(const size_t &ix);
+	
 	mvncStatus allocate_graph(
 		const void *device_handle, const void **graph_handle,
 		const void *graph_file, unsigned int graph_file_length);

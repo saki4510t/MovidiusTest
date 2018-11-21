@@ -369,9 +369,12 @@ int MvNcApi::remove(UsbDataLink *data_link) {
 
 	lock.lock();
 	{
-		device = find(data_link);
-		if (device) {
-			devices.remove(device);
+		for (auto itr = devices.begin(); itr != devices.end(); itr++) {
+			if ((*itr)->data_link == data_link) {
+				device = *itr;
+				devices.erase(itr);
+				break;
+			}
 		}
 	}
 	lock.unlock();
@@ -379,6 +382,19 @@ int MvNcApi::remove(UsbDataLink *data_link) {
 	SAFE_DELETE(device);
 	
 	RETURN(0, int);
+}
+
+const size_t MvNcApi::get_device_nums() {
+	Mutex::Autolock autolock(lock);
+	return devices.size();
+};
+
+void *MvNcApi::get_device(const size_t &ix) {
+	Mutex::Autolock autolock(lock);
+	if ((ix >= 0) && (ix < devices.size())) {
+		return devices.at(ix);
+	}
+	return NULL;
 }
 
 //======================================================================

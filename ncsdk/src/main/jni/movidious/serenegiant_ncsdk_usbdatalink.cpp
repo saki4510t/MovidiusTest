@@ -42,62 +42,62 @@ namespace ncs {
 
 using namespace serenegiant::usb::ncs;
 
+// native側オブジェクトを生成
 static ID_TYPE nativeCreate(JNIEnv *env, jobject thiz) {
 
 	ENTER();
 
 	jobject obj = env->NewGlobalRef(thiz);
 	//
-	UsbDataLink *ncs
-		= new UsbDataLink(obj);
-	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(ncs));
-	LOGD("ncs=%p", ncs);
+	UsbDataLink *datalink = new UsbDataLink(obj);
+	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(datalink));
+	LOGD("datalink=%p", datalink);
 
-	RETURN(reinterpret_cast<ID_TYPE>(ncs), ID_TYPE);
+	RETURN(reinterpret_cast<ID_TYPE>(datalink), ID_TYPE);
 }
 
-// native側のカメラオブジェクトを破棄
+// native側のオブジェクトを破棄
 static void nativeDestroy(JNIEnv *env, jobject thiz,
-	ID_TYPE id_ncs) {
+	ID_TYPE id_datalink) {
 
 	ENTER();
 
 	setField_long(env, thiz, "mNativePtr", 0);
-	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_ncs);
-	if (LIKELY(ncs)) {
-		ncs->release(env);
-		SAFE_DELETE(ncs);
+	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	if (LIKELY(datalink)) {
+		datalink->release(env);
+		SAFE_DELETE(datalink);
 	}
 
 	EXIT();
 }
 
-// カメラへ接続
+// データリンクを接続
 static jint nativeConnect(JNIEnv *env, jobject thiz,
-	ID_TYPE id_ncs, jint fd) {
+	ID_TYPE id_datalink, jint fd) {
 
 	ENTER();
 
 	int result = JNI_ERR;
-	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_ncs);
-	if (LIKELY(ncs && (fd > 0))) {
+	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	if (LIKELY(datalink && (fd > 0))) {
 		fd = dup(fd);	// Java側からcloseされてしまわないようにする
-		result = ncs->connect(fd);
+		result = datalink->connect(fd);
 	}
 
 	RETURN(result, jint);
 }
 
-// カメラとの接続を解除
+// データリンクを切断
 static jint nativeDisconnect(JNIEnv *env, jobject thiz,
-	ID_TYPE id_pipeline) {
+	ID_TYPE id_datalink) {
 
 	ENTER();
 
 	int result = JNI_ERR;
-	UsbDataLink *ncs = reinterpret_cast<UsbDataLink *>(id_pipeline);
-	if (LIKELY(ncs)) {
-		result = ncs->disconnect();
+	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	if (LIKELY(datalink)) {
+		result = datalink->disconnect();
 	}
 
 	RETURN(result, jint);

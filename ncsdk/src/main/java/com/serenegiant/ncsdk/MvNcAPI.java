@@ -1,10 +1,15 @@
 package com.serenegiant.ncsdk;
 
 import android.content.Context;
+import android.hardware.usb.UsbDevice;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.serenegiant.utils.ReentrantReadWriteList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MvNcAPI extends NativeObject {
 	private static final boolean DEBUG = true; // set false on production
@@ -53,6 +58,26 @@ public class MvNcAPI extends NativeObject {
 		} else {
 			Log.w(TAG, "datalink or this object is already released");
 		}
+	}
+
+	@Nullable
+	public IDataLink getDatalink(@NonNull final UsbDevice device) {
+		IDataLink found = null;
+		for (final IDataLink dataLink: mDataLinks) {
+			if (dataLink.equals(device)) {
+				found = dataLink;
+				break;
+			}
+		}
+		return found;
+	}
+
+	public List<IDataLink> getDatalinkAll() {
+		return new ArrayList<IDataLink>(mDataLinks);
+	}
+
+	public int getNumDataLinks() {
+		return mDataLinks.size();
 	}
 
 	@Override

@@ -48,6 +48,7 @@ LOCAL_SRC_FILES := \
 	_onload.cpp \
 	usb_data_link.cpp \
 	mvnc_api.cpp \
+	serenegiant_ncsdk_mvncapi.cpp \
 	serenegiant_ncsdk_usbdatalink.cpp \
 
 LOCAL_EXPORT_LDLIBS += -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)

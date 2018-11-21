@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.hardware.usb.UsbDevice;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.serenegiant.dialog.MessageDialogFragmentV4;
+import com.serenegiant.ncsdk.IDataLink;
+import com.serenegiant.ncsdk.MvNcAPI;
 import com.serenegiant.ncsdk.UsbDataLink;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity
 
 	private View mRootView;
 	private USBMonitor mUSBMonitor;
-	private UsbDataLink mDataLink;
+	private MvNcAPI mMvNcAPI;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,7 @@ public class MainActivity extends AppCompatActivity
 		
 		mAsyncHandler = HandlerThreadHandler.createHandler("");
 		mWorkerThreadID = mAsyncHandler.getLooper().getThread().getId();
+		mMvNcAPI = new MvNcAPI(this);
 		initView();
 		if (mUSBMonitor == null) {
 			mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
@@ -111,7 +115,11 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onDestroy() {
 		if (DEBUG) Log.v(TAG, "onDestroy:");
-		close(false);
+		close();
+		if (mMvNcAPI != null) {
+			mMvNcAPI.release();
+			mMvNcAPI = null;
+		}
 		if (mUSBMonitor != null) {
 			mUSBMonitor.destroy();
 			mUSBMonitor = null;
@@ -316,22 +324,37 @@ public class MainActivity extends AppCompatActivity
 		mRootView = findViewById(R.id.activity);
 	}
 
-	private void close(final boolean canFinish) {
-		if (DEBUG) Log.v(TAG, "close:" + canFinish);
+	private void close(@NonNull final IDataLink dataLink) {
+		
+		mMvNcAPI.remove(dataLink);
+		dataLink.release();
+		if (mMvNcAPI.getNumDataLinks() == 0) {
+			runOnUiThread(() -> {
+				finish();
+			});
+		}
+	}
+
+	private void close() {
+		if (DEBUG) Log.v(TAG, "close:");
 		synchronized (mSync) {
-			if (mDataLink != null) {
-				final UsbDataLink dataLink = mDataLink;
-				mDataLink = null;
+			final List<IDataLink> list = mMvNcAPI.getDatalinkAll();
+			if (!list.isEmpty()) {
 				mCameraState = CAMERA_NON;
 				queueEvent(() -> {
-					dataLink.release();
-					if (canFinish) {
-						runOnUiThread(() -> {
-							finish();
-						});
+					for (final IDataLink dataLink: list) {
+						synchronized (mSync) {
+							if (mMvNcAPI != null) {
+								mMvNcAPI.remove(dataLink);
+							}
+						}
+						dataLink.release();
 					}
+					runOnUiThread(() -> {
+						finish();
+					});
 				}, 0);
-			} else if (canFinish) {
+			} else {
 				runOnUiThread(() -> {
 					finish();
 				});
@@ -446,8 +469,9 @@ public class MainActivity extends AppCompatActivity
 			}	// synchronized (mCameraSync)
 			if (openDevice) {
 				// カメラをopen
+				final UsbDataLink dataLink;
 				try {
-					mDataLink = new UsbDataLink(MainActivity.this);
+					dataLink = new UsbDataLink(MainActivity.this);
 				} catch (final Exception e) {
 					synchronized (mSync) {
 						mCameraState = CAMERA_NON;
@@ -455,7 +479,8 @@ public class MainActivity extends AppCompatActivity
 					return;
 				}
 				queueEvent(() -> {
-					mDataLink.open(ctrlBlock);
+					dataLink.open(ctrlBlock);
+					mMvNcAPI.add(dataLink);
 				}, 0);
 			}
 		}
@@ -466,10 +491,12 @@ public class MainActivity extends AppCompatActivity
 
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onDisconnect:");
 			synchronized (mSync) {
-				if ((mCameraState != CAMERA_NON)
-					&& (mDataLink != null) && mDataLink.equals(device)) {
+				if ((mCameraState != CAMERA_NON)) {
+					final IDataLink dataLink = mMvNcAPI.getDatalink(device);
+					if (dataLink != null) {
+						close(dataLink);
+					}
 
-					close(mDataLink.isBooted());
 				}
 			}	// synchronized (mCameraSync)
 		}

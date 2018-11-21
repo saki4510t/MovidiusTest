@@ -18,6 +18,7 @@
 
 
 extern int register_ncs_movidius(JNIEnv *env);
+extern int register_ncs_mvnc_api(JNIEnv *env);
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     LOGD("JNI_OnLoad");
@@ -28,6 +29,9 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     // register native methods
 	int res = register_ncs_movidius(env);
+	env->ExceptionClear();
+	CHECK(!res);
+	res = register_ncs_mvnc_api(env);
 	env->ExceptionClear();
 	CHECK(!res);
 	//

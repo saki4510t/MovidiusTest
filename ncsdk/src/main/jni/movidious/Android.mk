@@ -6,6 +6,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/internal \
 	$(LOCAL_PATH)/.. \
 	$(LOCAL_PATH)/../externalLibs/include \
 	$(LOCAL_PATH)/../externalLibs/include/aandusb \
@@ -46,6 +47,7 @@ LOCAL_CFLAGS += -Wl,--version-script,movidius.map
 LOCAL_SRC_FILES := \
 	_onload.cpp \
 	usb_data_link.cpp \
+	mvnc_api.cpp \
 	serenegiant_ncsdk_usbdatalink.cpp \
 
 LOCAL_EXPORT_LDLIBS += -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)

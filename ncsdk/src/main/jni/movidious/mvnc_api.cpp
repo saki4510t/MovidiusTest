@@ -64,14 +64,14 @@ friend MvNcApi;
 		return data_link->get_status(myriadState);
 	};
 	inline int set_data(const char *name,
-		const void *data, const unsigned int &length,
+		const void *data, const uint32_t &length,
 		const uint8_t &host_ready) {
 		
 		return data_link->set_data(name,
 			data, length, host_ready);
 	};
 	inline int get_data(const char *name,
-		void *data, const unsigned int &length, const unsigned int &offset,
+		void *data, const uint32_t &length, const uint32_t &offset,
 		const uint8_t &host_ready) {
 		
 		return data_link->get_data(name,
@@ -151,7 +151,8 @@ Device::Device(UsbDataLink *_data_link)
 
 Device::~Device() {
 	ENTER();
-	Mutex:AutoMutex auto_lock(lock);
+
+	Mutex::Autolock auto_lock(lock);
 
 	for (auto itr: graphs) {
 		SAFE_DELETE(itr);
@@ -181,19 +182,21 @@ bool Device::remove(Graph *g) {
 	RETURN(false, bool);
 }
 
-static double time_in_seconds()
-{
+static double time_in_seconds() {
+	ENTER();
+
 	static double s;
 	struct timespec ts;
 
 	clock_gettime(CLOCK_MONOTONIC, &ts);
-	if (!s)
+	if (!s) {
 		s = ts.tv_sec + ts.tv_nsec * 1e-9;
-	return ts.tv_sec + ts.tv_nsec * 1e-9 - s;
+	}
+
+	RETURN(ts.tv_sec + ts.tv_nsec * 1e-9 - s, double);
 }
 
-static unsigned read_32bits(const unsigned char *ptr)
-{
+static uint32_t read_32bits(const unsigned char *ptr) {
 	return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
 }
 
@@ -332,14 +335,20 @@ mvncStatus mvncOpenDevice(const char *name, void **device_handle)
 MvNcApi::MvNcApi()
 : log_level(0)
 {
+	ENTER();
+	EXIT();
 }
 
 MvNcApi::~MvNcApi() {
+	ENTER();
+
 	Mutex::Autolock auto_lock(lock);
 	
 	for (auto itr: devices) {
 		SAFE_DELETE(itr);
 	}
+
+	EXIT();
 }
 
 /*public*/
@@ -388,17 +397,23 @@ int MvNcApi::remove(UsbDataLink *data_link) {
 
 /*public*/
 const size_t MvNcApi::get_device_nums() {
+	ENTER();
+
 	Mutex::Autolock autolock(lock);
-	return devices.size();
+
+	RETURN(devices.size(), size_t);
 };
 
 /*public*/
 void *MvNcApi::get_device(const size_t &ix) {
+	ENTER();
+
 	Mutex::Autolock autolock(lock);
 	if ((ix >= 0) && (ix < devices.size())) {
-		return devices.at(ix);
+		RET(devices.at(ix));
 	}
-	return NULL;
+
+	RET(NULL);
 }
 
 /*public*/
@@ -416,20 +431,24 @@ mvncStatus MvNcApi::allocate_graph(
 	const void *device_handle, void **graph_handle,
 	const void *graph_file, const size_t &graph_file_length) {
 
+	ENTER();
+
 	if (!device_handle || !graph_handle || !graph_file)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 
-	if (graph_file_length < HEADER_LENGTH + STAGE_LENGTH ||
-	  graph_file_length > 512 * 1024 * 1024)
+	if ((graph_file_length < HEADER_LENGTH + STAGE_LENGTH) ||
+		(graph_file_length > 512 * 1024 * 1024)) {
+
 		RETURN(MVNC_UNSUPPORTED_GRAPH_FILE, mvncStatus);
+	}
 
 	unsigned char *graph = (unsigned char *) graph_file;
 	if (graph[VERSION_OFFSET] != GRAPH_VERSION) {
 		RETURN(MVNC_UNSUPPORTED_GRAPH_FILE, mvncStatus);
 	}
 
-	unsigned nstages = graph[N_STAGES_OFFSET] + (graph[N_STAGES_OFFSET + 1] << 8);
-	unsigned noutputs
+	uint32_t nstages = graph[N_STAGES_OFFSET] + (graph[N_STAGES_OFFSET + 1] << 8);
+	uint32_t noutputs
 		= read_32bits(graph + N_OUTPUTS_OFFSET + (nstages - 1) * STAGE_LENGTH)
 		* read_32bits(graph + N_OUTPUTS_OFFSET + (nstages - 1) * STAGE_LENGTH + 4)
         * read_32bits(graph + X_OUT_STRIDE_OFFSET + (nstages - 1) * STAGE_LENGTH) / 2;
@@ -522,6 +541,8 @@ mvncStatus MvNcApi::allocate_graph(
 }
 
 mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
+	ENTER();
+
 	if (!graph_handle) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
@@ -550,6 +571,8 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 mvncStatus MvNcApi::set_graph_option(
 	const void *graph_handle, const int &option,
 	const void *data, const size_t &data_length) {
+
+	ENTER();
 
 	if (!graph_handle || !data || data_length != 4)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -586,8 +609,11 @@ mvncStatus MvNcApi::get_graph_option(
 	const void *graph_handle, const int &option,
 	void *data, size_t &data_length) {
 
-	if (!graph_handle || !data)
+	ENTER();
+
+	if (!graph_handle || !data) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
@@ -631,8 +657,8 @@ mvncStatus MvNcApi::get_graph_option(
 
 mvncStatus MvNcApi::set_global_option(
 	const int option, const void *data,
-	const size_t &data_length)
-{
+	const size_t &data_length) {
+
 	ENTER();
 
 	if (!data || data_length != 4)
@@ -650,8 +676,8 @@ mvncStatus MvNcApi::set_global_option(
 }
 
 mvncStatus MvNcApi::get_global_option(const int &option,
-	void *data, size_t &data_length)
-{
+	void *data, size_t &data_length) {
+
 	ENTER();
 
 	if (!data) {
@@ -666,6 +692,7 @@ mvncStatus MvNcApi::get_global_option(const int &option,
 	default:
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
+
 	RETURN(MVNC_OK, mvncStatus);
 }
 
@@ -989,25 +1016,29 @@ bool MvNcApi::is_graph_exist(const Graph *graph) {
 
 /*private*/
 // Defined here as it will be used twice
-int MvNcApi::deallocate_graph(Graph *g)
-{
+int MvNcApi::deallocate_graph(Graph *g) {
+	ENTER();
+
 	bool removed = g->dev->remove(g);
 	if (removed) {
 		SAFE_DELETE(g);
 	}
 
-	return -!removed;
+	RETURN(-!removed, int);
 }
 
 /*private*/
 mvncStatus MvNcApi::get_optimisation_list(Device *d) {
+	ENTER();
+
 	int i, config[10];
 	double timeout;
 	myriadStatus_t status;
 	char *p;
 
-	if (d->optimisation_list)
+	if (d->optimisation_list) {
 		RETURN(MVNC_OK, mvncStatus);
+	}
 
 	d->optimisation_list = new char[OPTIMISATION_LIST_BUFFER_SIZE];
 	if (!d->optimisation_list) {
@@ -1058,7 +1089,7 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 	ENTER();
 
-	int config[10];	// FIXME int32_t ?
+	int32_t config[10];	// FIXME int32_t ?
 
 	config[0] = 1;		// Version
 	config[1] = 0;		// Query disable

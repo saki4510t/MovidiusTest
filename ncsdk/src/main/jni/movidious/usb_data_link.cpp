@@ -2,7 +2,7 @@
 // Created by saki on 2018/11/21.
 //
 
-#if 0	// set 0 is you need debug log, otherwise set 1
+#if 1	// set 0 is you need debug log, otherwise set 1
 	#ifndef LOG_NDEBUG
 		#define	LOG_NDEBUG
 	#endif

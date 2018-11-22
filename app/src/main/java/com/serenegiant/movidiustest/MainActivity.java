@@ -2,6 +2,7 @@ package com.serenegiant.movidiustest;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -137,6 +138,7 @@ public class MainActivity extends AppCompatActivity
 
 	protected void internalOnResume() {
 		if (DEBUG) Log.v(TAG, "internalOnResume:" + mUSBMonitor);
+		checkPermissionWriteExternalStorage();
 		if ((mUSBMonitor != null) && !mUSBMonitor.isRegistered()) {
 			if (DEBUG) Log.v(TAG, "internalOnResume:register USBMonitor");
 			mUSBMonitor.register();
@@ -161,7 +163,20 @@ public class MainActivity extends AppCompatActivity
 		return mUSBMonitor;
 	}
 	
-//================================================================================
+	@Override
+	public void onRequestPermissionsResult(final int requestCode,
+		@NonNull final String[] permissions, @NonNull final int[] grantResults) {
+
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (DEBUG) Log.v(TAG, "onRequestPermissionsResult:");
+		final int n = Math.min(permissions.length, grantResults.length);
+		for (int i = 0; i < n; i++) {
+			checkPermissionResult(requestCode, permissions[i],
+				grantResults[i] == PackageManager.PERMISSION_GRANTED);
+		}
+	}
+
+	//================================================================================
 	/**
 	 * UIスレッド上で指定したRunnableを実行する
 	 * 未実行の同じRunnableがあればキャンセルされる(後から指定した方のみ実行される)
@@ -314,6 +329,23 @@ public class MainActivity extends AppCompatActivity
 				Toast.makeText(this, R.string.permission_network, Toast.LENGTH_SHORT).show();
 			}
 		}
+	}
+
+	protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x2345;
+	/**
+	 * 外部ストレージへの書き込みパーミッションが有るかどうかをチェック
+	 * なければ説明ダイアログを表示する
+	 * @return true 外部ストレージへの書き込みパーミッションが有る
+	 */
+	protected boolean checkPermissionWriteExternalStorage() {
+		if (DEBUG) Log.v(TAG, "checkPermissionWriteExternalStorage:");
+		if (!PermissionCheck.hasWriteExternalStorage(this)) {
+			MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
+				R.string.permission_title, R.string.permission_audio_recording_request,
+				new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE});
+			return false;
+		}
+		return true;
 	}
 
 //================================================================================

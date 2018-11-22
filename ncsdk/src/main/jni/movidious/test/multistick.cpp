@@ -178,7 +178,7 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 		imgfp32[3 * i + 1] = green - mean[1];
 		imgfp32[3 * i + 2] = red - mean[2];
 		
-		// uncomment to see what values are getting passed to mvncLoadTensor() before conversion to half float
+		// uncomment to see what values are getting passed to load_tensor() before conversion to half float
 		//LOGD("Blue: %f, Grean: %f,  Red: %f", imgfp32[3*i+0], imgfp32[3*i+1], imgfp32[3*i+2]);
 	}
 	floattofp16((unsigned char *) imgfp16, imgfp32, 3 * reqSize * reqSize);
@@ -186,37 +186,6 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 
 	RET(imgfp16);
 }
-
-
-//// Opens one NCS device.
-//// Param deviceIndex is the zero-based index of the device to open
-//// Param deviceHandle is the address of a device handle that will be set
-////                    if opening is successful
-//// Returns true if works or false if doesn't.
-//bool OpenOneNCS(int deviceIndex, void** deviceHandle)
-//{
-//    mvncStatus retCode;
-//    char devName[NAME_SIZE];
-//    retCode = mvncGetDeviceName(deviceIndex, devName, NAME_SIZE);
-//    if (retCode != MVNC_OK)
-//    {   // failed to get this device's name, maybe none plugged in.
-//        LOGE("Error - NCS device at index %d not found", deviceIndex);
-//        return false;
-//    }
-//
-//    // Try to open the NCS device via the device name
-//    retCode = mvncOpenDevice(devName, deviceHandle);
-//    if (retCode != MVNC_OK)
-//    {   // failed to open the device.
-//        LOGE("Error - Could not open NCS device at index %d", deviceIndex);
-//        return false;
-//    }
-//
-//    // deviceHandle is ready to use now.
-//    // Pass it to other NC API calls as needed and close it when finished.
-//    LOGD("Successfully opened NCS device at index %d!", deviceIndex);
-//    return true;
-//}
 
 
 // Loads a compiled network graph onto the NCS device.
@@ -237,7 +206,7 @@ bool LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename,
 	free(graphFileBuf);
 	if (retCode != MVNC_OK) {   // error allocating graph
 		LOGE("Could not allocate graph for file: %s", graphFilename);
-		LOGE("Error from mvncAllocateGraph is: %d", retCode);
+		LOGE("Error from allocate_graph is: %d", retCode);
 		RETURN(false, bool);
 	}
 	
@@ -276,16 +245,16 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	// 3 channels * width * height * sizeof a 16bit float
 	unsigned int lenBufFp16 = 3 * networkDim * networkDim * sizeof(*imageBufFp16);
 	
-	// start the inference with mvncLoadTensor()
+	// start the inference with load_tensor()
 	retCode = api->load_tensor(graphHandle, imageBufFp16, lenBufFp16, NULL);
 	free(imageBufFp16);
 	if (retCode != MVNC_OK) {   // error loading tensor
 		LOGE("Error - Could not load tensor");
-		LOGE("    mvncStatus from mvncLoadTensor is: %d", retCode);
+		LOGE("    mvncStatus from load_tensor is: %d", retCode);
 		RETURN(false, bool);
 	}
 	
-	// the inference has been started, now call mvncGetResult() for the
+	// the inference has been started, now call get_result() for the
 	// inference result
 	LOGD("Successfully loaded the tensor for image %s", imageFileName);
 	
@@ -295,7 +264,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	retCode = api->get_result(graphHandle, &resultData16, &lenResultData, &userParam);
 	if (retCode != MVNC_OK) {
 		LOGE("Error - Could not get result for image %s", imageFileName);
-		LOGE("    mvncStatus from mvncGetResult is: %d", retCode);
+		LOGE("    mvncStatus from get_result is: %d", retCode);
 		RETURN(false, bool);
 	}
 	
@@ -339,6 +308,8 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 		RETURN(-1, int);
 	}
 	
+	LOGD("number of connected device(s) %" FMT_SIZE_T, api->get_device_nums());
+
 	if (devHandle1) {
 		std::string path = base_path;
 		if (!LoadGraphToNCS(api, devHandle1,

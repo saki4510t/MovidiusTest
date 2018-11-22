@@ -449,6 +449,7 @@ mvncStatus MvNcApi::allocate_graph(
 	}
 	if (!d) {
 		lock.unlock();
+		LOGE("could not find specific device 0x%08p", device_handle);
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
 

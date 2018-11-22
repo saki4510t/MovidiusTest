@@ -61,4 +61,10 @@
 //
 typedef		jlong						ID_TYPE;
 
+#if defined(__LP64__)
+#define FMT_SIZE_T "lu"
+#else
+#define FMT_SIZE_T "u"
+#endif
+
 #endif /* LOCALDEFINES_H_ */

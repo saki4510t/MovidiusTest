@@ -414,7 +414,7 @@ int MvNcApi::run(const char *data_path) {
 //======================================================================
 mvncStatus MvNcApi::allocate_graph(
 	const void *device_handle, void **graph_handle,
-	const void *graph_file, unsigned int graph_file_length) {
+	const void *graph_file, const size_t graph_file_length) {
 
 	if (!device_handle || !graph_handle || !graph_file)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -548,7 +548,7 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 
 mvncStatus MvNcApi::set_graph_option(
 	const void *graph_handle, const int option,
-	const void *data, const unsigned int data_length) {
+	const void *data, const size_t data_length) {
 
 	if (!graph_handle || !data || data_length != 4)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);

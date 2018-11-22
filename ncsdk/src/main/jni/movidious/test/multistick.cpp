@@ -229,8 +229,8 @@ bool LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename,
 	mvncStatus retCode;
 	
 	// Read in a graph file
-	unsigned int graphFileLen;
-	void *graphFileBuf = LoadGraphFile(graphFilename, &graphFileLen);
+	size_t graphFileLen;
+	void *graphFileBuf = LoadGraphFile(graphFilename, graphFileLen);
 	
 	// allocate the graph
 	retCode = api->allocate_graph(deviceHandle, graphHandle, graphFileBuf, graphFileLen);

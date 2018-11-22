@@ -313,9 +313,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 }
 
 // Main entry point for the program
-int run(MvNcApi *api, std::string &base_path)
-{
-    mvncStatus retCode;
+int run_test(MvNcApi *api, const std::string &base_path) {
     void *devHandle1;
     void *devHandle2;
     void *graphHandleGoogleNet = NULL;

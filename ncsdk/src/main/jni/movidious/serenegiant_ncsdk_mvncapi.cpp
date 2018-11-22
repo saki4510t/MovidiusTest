@@ -94,6 +94,27 @@ static int nativeRemoveDataLink(JNIEnv *env, jobject thiz,
 	RETURN(result, int);
 }
 
+// UsbDataLinkオブジェクトをMvNcAPIオブジェクトから除去
+static int nativeRun(JNIEnv *env, jobject thiz,
+	ID_TYPE id_api, jstring path_str) {
+
+	ENTER();
+
+	int result = -1;
+	MvNcApi *api = reinterpret_cast<MvNcApi *>(id_api);
+	if (LIKELY(api && path_str)) {
+		// Javaの文字列をC/C++から使用できるように変換する
+		const char *path = path_str ? env->GetStringUTFChars(path_str, JNI_FALSE) : NULL;
+		result = api->run(path);
+		// 文字列を開放する
+		if (path) {
+			env->ReleaseStringUTFChars(path_str, path);
+		}
+	}
+
+	RETURN(result, int);
+}
+
 //**********************************************************************
 //
 //**********************************************************************
@@ -103,6 +124,7 @@ static JNINativeMethod methods[] = {
 	{ "nativeDestroy",			"(J)V", (void *) nativeDestroy },
 	{ "nativeAddDataLink",		"(JJ)I", (void *) nativeAddDataLink },
 	{ "nativeRemoveDataLink",	"(JJ)I", (void *) nativeRemoveDataLink },
+	{ "nativeRun",				"(JLjava/lang/String;)I", (void *) nativeRun },
 };
 
 int register_ncs_mvnc_api(JNIEnv *env) {

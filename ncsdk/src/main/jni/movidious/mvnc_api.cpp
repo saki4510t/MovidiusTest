@@ -23,7 +23,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <pthread.h>
-
+#include <string>
 
 // common
 #include "utilbase.h"
@@ -34,6 +34,8 @@
 #include "mvnc_api.h"
 #include "mvnc_internal.h"
 #include "usb_data_link.h"
+
+extern int run_test(serenegiant::usb::ncs::MvNcApi *api, const std::string &base_path);
 
 namespace serenegiant {
 namespace usb {
@@ -384,17 +386,29 @@ int MvNcApi::remove(UsbDataLink *data_link) {
 	RETURN(0, int);
 }
 
+/*public*/
 const size_t MvNcApi::get_device_nums() {
 	Mutex::Autolock autolock(lock);
 	return devices.size();
 };
 
+/*public*/
 void *MvNcApi::get_device(const size_t &ix) {
 	Mutex::Autolock autolock(lock);
 	if ((ix >= 0) && (ix < devices.size())) {
 		return devices.at(ix);
 	}
 	return NULL;
+}
+
+/*public*/
+int MvNcApi::run(const char *data_path) {
+	ENTER();
+
+	const std::string path(data_path);
+	int result = run_test(this, path);
+
+	RETURN(result, int);
 }
 
 //======================================================================

@@ -21,7 +21,11 @@ public class MvNcAPI extends NativeObject {
 	
 	private final ReentrantReadWriteList<IDataLink>
 		mDataLinks = new ReentrantReadWriteList<>();
-
+	
+	/**
+	 * コンストラクタ
+	 * @param context
+	 */
 	public MvNcAPI(@NonNull final Context context) {
 		super(context);
 	}
@@ -79,6 +83,20 @@ public class MvNcAPI extends NativeObject {
 	public int getNumDataLinks() {
 		return mDataLinks.size();
 	}
+	
+	/**
+	 * なんかを実行
+	 * @param dataPath graphや画像データの存在するパス
+	 * @param dataPath
+	 */
+	public void run(@NonNull final String dataPath)
+		throws IllegalArgumentException {
+
+		final int result = nativeRun(mNativePtr, dataPath);
+		if (result != 0) {
+			throw new IllegalArgumentException("err=" + result);
+		}
+	}
 
 	@Override
 	protected native long nativeCreate();
@@ -87,4 +105,6 @@ public class MvNcAPI extends NativeObject {
 	
 	private native int nativeAddDataLink(final long id_api, final long id_datalink);
 	private native int nativeRemoveDataLink(final long id_api, final long id_datalink);
+	
+	private native int nativeRun(final long id_api, @NonNull final String dataPath);
 }

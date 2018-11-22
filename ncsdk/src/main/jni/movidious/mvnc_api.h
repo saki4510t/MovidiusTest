@@ -43,6 +43,7 @@ public:
 	int remove(UsbDataLink *data_link);
 	const size_t get_device_nums();
 	void *get_device(const size_t &ix);
+	int run(const char *data_path);
 	
 	mvncStatus allocate_graph(
 		const void *device_handle, void **graph_handle,

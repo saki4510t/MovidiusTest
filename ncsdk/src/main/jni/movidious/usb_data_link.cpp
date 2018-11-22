@@ -129,14 +129,14 @@ int UsbDataLink::get_status(myriadStatus_t &myriad_state) {
 
 int UsbDataLink::set_data(const char *name,
 	const void *data, const uint32_t &length,
-	const uint8_t &host_ready) {
+	const bool &host_ready) {
 
 	ENTER();
 	
 	usbHeader_t header;
 	memset(&header, 0, sizeof(usbHeader_t));
 	header.cmd = USB_LINK_HOST_SET_DATA;
-	header.hostready = host_ready;
+	header.hostready = (uint8_t)(host_ready ? 1 : 0);
 	strcpy(header.name, name);
 	header.dataLength = length;
 	int err = write(&header, sizeof(usbHeader_t));
@@ -162,14 +162,14 @@ int UsbDataLink::set_data(const char *name,
 
 int UsbDataLink::get_data(const char *name,
 	void *data, const uint32_t &length, const uint32_t &offset,
-	const uint8_t &host_ready) {
+	const bool &host_ready) {
 
 	ENTER();
 	
 	usbHeader_t header;
 	memset(&header, 0, sizeof(usbHeader_t));
 	header.cmd = USB_LINK_HOST_GET_DATA;
-	header.hostready = host_ready;
+	header.hostready = (uint8_t)(host_ready ? 1 : 0);
 	strcpy(header.name, name);
 	header.dataLength = length;
 	header.offset = offset;

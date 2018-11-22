@@ -59,20 +59,20 @@ friend MvNcApi;
 	Device(UsbDataLink *_data_link);
 	~Device();
 	
-	bool remove(Graph *g);
+	int remove(Graph *graph);
 	inline int get_status(myriadStatus_t &myriadState) {
 		return data_link->get_status(myriadState);
 	};
 	inline int set_data(const char *name,
 		const void *data, const uint32_t &length,
-		const uint8_t &host_ready) {
+		const bool &host_ready) {
 		
 		return data_link->set_data(name,
 			data, length, host_ready);
 	};
 	inline int get_data(const char *name,
 		void *data, const uint32_t &length, const uint32_t &offset,
-		const uint8_t &host_ready) {
+		const bool &host_ready) {
 		
 		return data_link->get_data(name,
 			data, length, offset, host_ready);
@@ -164,12 +164,17 @@ Device::~Device() {
 	EXIT();
 }
 
-bool Device::remove(Graph *g) {
+/**
+ * 指定したgraphを削除する
+ * @param graph
+ * @return 0:削除できた, -1:削除できなかった
+ */
+int Device::remove(Graph *graph) {
 	ENTER();
 	
 	Graph *found = NULL;
 	for (auto itr: graphs) {
-		if (itr == g) {
+		if (itr == graph) {
 			found = itr;
 			break;
 		}
@@ -177,9 +182,10 @@ bool Device::remove(Graph *g) {
 	if (found) {
 		thermal_stats = NULL;
 		graphs.remove(found);
-		RETURN(true, bool);
+		RETURN(0, int);
 	}
-	RETURN(false, bool);
+
+	RETURN(-1, int);
 }
 
 static double time_in_seconds() {
@@ -433,8 +439,9 @@ mvncStatus MvNcApi::allocate_graph(
 
 	ENTER();
 
-	if (!device_handle || !graph_handle || !graph_file)
+	if (!device_handle || !graph_handle || !graph_file) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	if ((graph_file_length < HEADER_LENGTH + STAGE_LENGTH) ||
 		(graph_file_length > 512 * 1024 * 1024)) {
@@ -549,7 +556,7 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 
 	Graph *g = reinterpret_cast<Graph *>(graph_handle);
 	lock.lock();
-	if (is_graph_exist(g)) {
+	if (!is_graph_exist(g)) {
 		lock.unlock();
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
@@ -579,7 +586,7 @@ mvncStatus MvNcApi::set_graph_option(
 
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
-	if (is_graph_exist(g)) {
+	if (!is_graph_exist(g)) {
 		lock.unlock();
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
@@ -617,7 +624,7 @@ mvncStatus MvNcApi::get_graph_option(
 
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
-	if (is_graph_exist(g)) {
+	if (!is_graph_exist(g)) {
 		lock.unlock();
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
@@ -865,7 +872,7 @@ mvncStatus MvNcApi::load_tensor(
 		lock.unlock();
 		usleep(1000);
 		lock.lock();
-		if (is_graph_exist(g)) {
+		if (!is_graph_exist(g)) {
 			lock.unlock();
 			RETURN(MVNC_GONE, mvncStatus);
 		}
@@ -1019,17 +1026,23 @@ bool MvNcApi::is_graph_exist(const Graph *graph) {
 	RETURN(false, bool);
 }
 
+/**
+ * 指定したgraphを削除
+ */
 /*private*/
 // Defined here as it will be used twice
-int MvNcApi::deallocate_graph(Graph *g) {
+int MvNcApi::deallocate_graph(Graph *graph) {
 	ENTER();
 
-	bool removed = g->dev->remove(g);
-	if (removed) {
-		SAFE_DELETE(g);
+	if (UNLIKELY(!graph)) {
+		RETURN(MVNC_INVALID_PARAMETERS, int);
+	}
+	int err = graph->dev->remove(graph);
+	if (LIKELY(!err)) {
+		SAFE_DELETE(graph);
 	}
 
-	RETURN(-!removed, int);
+	RETURN(err, int);
 }
 
 /*private*/
@@ -1094,7 +1107,7 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 	ENTER();
 
-	int32_t config[10];	// FIXME int32_t ?
+	int32_t config[10];
 
 	config[0] = 1;		// Version
 	config[1] = 0;		// Query disable

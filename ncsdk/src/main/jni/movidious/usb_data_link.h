@@ -44,10 +44,10 @@ public:
 	virtual int get_status(myriadStatus_t &myriadState);
 	virtual int set_data(const char *name,
 		const void *data, const uint32_t &length,
-		const uint8_t &host_ready);
+		const bool &host_ready);
 	virtual int get_data(const char *name,
 		void *data, const uint32_t &length, const uint32_t &offset,
-		const uint8_t &host_ready);
+		const bool &host_ready);
 };
 
 }	// namespace ncs

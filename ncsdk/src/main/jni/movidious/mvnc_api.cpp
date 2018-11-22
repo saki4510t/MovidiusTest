@@ -999,6 +999,11 @@ bool MvNcApi::is_device_exist(const Device *device) {
 	RETURN(false, bool);
 }
 
+/**
+ * 指定したgraphが存在しているかどうかをチェック
+ * @param graph
+ * @return 存在していればtrue, していなければfalse(これはncsdkのfind_graphと論理が逆なので注意)
+ */
 /*private*/
 bool MvNcApi::is_graph_exist(const Graph *graph) {
 	ENTER();

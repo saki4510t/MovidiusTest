@@ -13,16 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if 0    // set 0 is you need debug log, otherwise set 1
+#ifndef LOG_NDEBUG
+#define	LOG_NDEBUG
+#endif
+#undef USE_LOGALL
+#else
+#define USE_LOGALL
+#undef LOG_NDEBUG
+#undef NDEBUG
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 
+// common
+#include "utilbase.h"
+
 #include "mvnc_api.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "stb_image.h"
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
+
 #include "stb_image_resize.h"
 
 #include "fp16.h"
@@ -55,11 +71,12 @@ typedef unsigned short half;
 // GoogleNet image dimensions, network mean values for each channel in BGR order.
 const unsigned int networkDimGoogleNet = 224;
 const unsigned int networkDimSqueezeNet = 227;
-float networkMeanGoogleNet[] = {0.40787054*255.0, 0.45752458*255.0, 0.48109378*255.0};
-float networkMeanSqueezeNet[] = {0.40787054*255.0, 0.45752458*255.0, 0.48109378*255.0};
+float networkMeanGoogleNet[] = {0.40787054 * 255.0, 0.45752458 * 255.0, 0.48109378 * 255.0};
+float networkMeanSqueezeNet[] = {0.40787054 * 255.0, 0.45752458 * 255.0, 0.48109378 * 255.0};
 
 // Prototypes
 void *LoadGraphFile(const char *path, unsigned int *length);
+
 half *LoadImage(const char *path, unsigned int reqsize, float *mean);
 // end prototypes
 
@@ -71,30 +88,31 @@ half *LoadImage(const char *path, unsigned int reqsize, float *mean);
 //              allocated for the buffer
 // Returns pointer to the buffer allcoated. 
 // Note: The caller must free the buffer returned.
-void *LoadGraphFile(const char *path, unsigned int *length)
-{
+void *LoadGraphFile(const char *path, size_t &length) {
+	ENTER();
+	
 	FILE *fp;
 	char *buf;
-
+	
 	fp = fopen(path, "rb");
-	if(fp == NULL)
-		return 0;
-	fseek(fp, 0, SEEK_END);
-	*length = ftell(fp);
-	rewind(fp);
-	if(!(buf = (char*) malloc(*length)))
-	{
-		fclose(fp);
-		return 0;
+	if (fp == NULL) {
+		RET(NULL);
 	}
-	if(fread(buf, 1, *length, fp) != *length)
-	{
+	fseek(fp, 0, SEEK_END);
+	length = (size_t) ftell(fp);
+	rewind(fp);
+	if (!(buf = (char *) malloc(length))) {
+		fclose(fp);
+		RET(NULL);
+	}
+	if (fread(buf, 1, length, fp) != length) {
 		fclose(fp);
 		free(buf);
-		return 0;
+		RET(NULL);
 	}
 	fclose(fp);
-	return buf;
+	
+	RET(buf);
 }
 
 // Reads an image file from disk (8 bit per channel RGB .jpg or .png or other formats 
@@ -113,62 +131,60 @@ void *LoadGraphFile(const char *path, unsigned int *length)
 // Returns a pointer to a buffer that is allocated internally via malloc.  this buffer contains
 //         the 16 bit float values that can be passed to mvncLoadTensor().  The returned buffer 
 //         will contain reqSize*reqSize*3 half floats.
-half *LoadImage(const char *path, unsigned int reqSize, float *mean)
-{
+half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
+	ENTER();
+
 	int width, height, cp, i;
 	unsigned char *img, *imgresized;
 	float *imgfp32;
 	half *imgfp16;
-
+	
 	img = stbi_load(path, &width, &height, &cp, 3);
-	if(!img)
-	{
-		printf("Error - the image file %s could not be loaded\n", path);
-		return NULL;
+	if (!img) {
+		LOGE("Error - the image file %s could not be loaded", path);
+		RET(NULL);
 	}
-	imgresized = (unsigned char*) malloc(3*reqSize*reqSize);
-	if(!imgresized)
-	{
+	imgresized = (unsigned char *) malloc(3 * reqSize * reqSize);
+	if (!imgresized) {
 		free(img);
 		perror("malloc");
-		return NULL;
+		RET(NULL);
 	}
 	stbir_resize_uint8(img, width, height, 0, imgresized, reqSize, reqSize, 0, 3);
 	free(img);
-	imgfp32 = (float*) malloc(sizeof(*imgfp32) * reqSize * reqSize * 3);
-	if(!imgfp32)
-	{
+	imgfp32 = (float *) malloc(sizeof(*imgfp32) * reqSize * reqSize * 3);
+	if (!imgfp32) {
 		free(imgresized);
 		perror("malloc");
-		return NULL;
+		RET(NULL);
 	}
-	for(i = 0; i < reqSize * reqSize * 3; i++)
+	for (i = 0; i < reqSize * reqSize * 3; i++) {
 		imgfp32[i] = imgresized[i];
+	}
 	free(imgresized);
-	imgfp16 = (half*) malloc(sizeof(*imgfp16) * reqSize * reqSize * 3);
-	if(!imgfp16)
-	{
+	imgfp16 = (half *) malloc(sizeof(*imgfp16) * reqSize * reqSize * 3);
+	if (!imgfp16) {
 		free(imgfp32);
 		perror("malloc");
-		return NULL;
+		RET(NULL);
 	}
-	for(i = 0; i < reqSize*reqSize; i++)
-	{
+	for (i = 0; i < reqSize * reqSize; i++) {
 		float blue, green, red;
-                blue = imgfp32[3*i+2];
-                green = imgfp32[3*i+1];
-                red = imgfp32[3*i+0];
-
-                imgfp32[3*i+0] = blue-mean[0];
-                imgfp32[3*i+1] = green-mean[1]; 
-                imgfp32[3*i+2] = red-mean[2];
-
-                // uncomment to see what values are getting passed to mvncLoadTensor() before conversion to half float
-                //printf("Blue: %f, Grean: %f,  Red: %f \n", imgfp32[3*i+0], imgfp32[3*i+1], imgfp32[3*i+2]);
+		blue = imgfp32[3 * i + 2];
+		green = imgfp32[3 * i + 1];
+		red = imgfp32[3 * i + 0];
+		
+		imgfp32[3 * i + 0] = blue - mean[0];
+		imgfp32[3 * i + 1] = green - mean[1];
+		imgfp32[3 * i + 2] = red - mean[2];
+		
+		// uncomment to see what values are getting passed to mvncLoadTensor() before conversion to half float
+		//LOGD("Blue: %f, Grean: %f,  Red: %f", imgfp32[3*i+0], imgfp32[3*i+1], imgfp32[3*i+2]);
 	}
-	floattofp16((unsigned char *)imgfp16, imgfp32, 3*reqSize*reqSize);
+	floattofp16((unsigned char *) imgfp16, imgfp32, 3 * reqSize * reqSize);
 	free(imgfp32);
-	return imgfp16;
+
+	RET(imgfp16);
 }
 
 
@@ -184,7 +200,7 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean)
 //    retCode = mvncGetDeviceName(deviceIndex, devName, NAME_SIZE);
 //    if (retCode != MVNC_OK)
 //    {   // failed to get this device's name, maybe none plugged in.
-//        printf("Error - NCS device at index %d not found\n", deviceIndex);
+//        LOGE("Error - NCS device at index %d not found", deviceIndex);
 //        return false;
 //    }
 //
@@ -192,13 +208,13 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean)
 //    retCode = mvncOpenDevice(devName, deviceHandle);
 //    if (retCode != MVNC_OK)
 //    {   // failed to open the device.
-//        printf("Error - Could not open NCS device at index %d\n", deviceIndex);
+//        LOGE("Error - Could not open NCS device at index %d", deviceIndex);
 //        return false;
 //    }
 //
 //    // deviceHandle is ready to use now.
 //    // Pass it to other NC API calls as needed and close it when finished.
-//    printf("Successfully opened NCS device at index %d!\n", deviceIndex);
+//    LOGD("Successfully opened NCS device at index %d!", deviceIndex);
 //    return true;
 //}
 
@@ -209,30 +225,28 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean)
 // Param graphHandle is the address of the graph handle that will be created internally.
 //                   the caller must call mvncDeallocateGraph when done with the handle.
 // Returns true if works or false if doesn't.
-bool LoadGraphToNCS(MvNcApi *api, void* deviceHandle, const char* graphFilename, void** graphHandle)
-{
-    mvncStatus retCode;
-
-    // Read in a graph file
-    unsigned int graphFileLen;
-    void* graphFileBuf = LoadGraphFile(graphFilename, &graphFileLen);
-
-    // allocate the graph
-    retCode = api->allocate_graph(deviceHandle, graphHandle, graphFileBuf, graphFileLen);
-    free(graphFileBuf);
-    if (retCode != MVNC_OK)
-    {   // error allocating graph
-        printf("Could not allocate graph for file: %s\n", graphFilename); 
-        printf("Error from mvncAllocateGraph is: %d\n", retCode);
-        return false;
-    }
-
-    // successfully allocated graph.  Now graphHandle is ready to go.  
-    // use graphHandle for other API calls and call mvncDeallocateGraph
-    // when done with it.
-    printf("Successfully allocated graph for %s\n", graphFilename);
-
-    return true;
+bool LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename, void **graphHandle) {
+	mvncStatus retCode;
+	
+	// Read in a graph file
+	unsigned int graphFileLen;
+	void *graphFileBuf = LoadGraphFile(graphFilename, &graphFileLen);
+	
+	// allocate the graph
+	retCode = api->allocate_graph(deviceHandle, graphHandle, graphFileBuf, graphFileLen);
+	free(graphFileBuf);
+	if (retCode != MVNC_OK) {   // error allocating graph
+		LOGE("Could not allocate graph for file: %s", graphFilename);
+		LOGE("Error from mvncAllocateGraph is: %d", retCode);
+		RETURN(false, bool);
+	}
+	
+	// successfully allocated graph.  Now graphHandle is ready to go.
+	// use graphHandle for other API calls and call mvncDeallocateGraph
+	// when done with it.
+	LOGD("Successfully allocated graph for %s", graphFilename);
+	
+	RETURN(true, bool);
 }
 
 
@@ -247,131 +261,134 @@ bool LoadGraphToNCS(MvNcApi *api, void* deviceHandle, const char* graphFilename,
 //                   for each color channel, blue, green, and red in that order.
 // Returns tru if works or false if doesn't
 bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
-	const char* imageFileName, unsigned int networkDim, float* networkMean)
-{
-    mvncStatus retCode;
+  const char *imageFileName, unsigned int networkDim, float *networkMean) {
+	mvncStatus retCode;
 
-    // LoadImage will read image from disk, convert channels to floats
-    // subtract network mean for each value in each channel.  Then, convert 
-    // floats to half precision floats and return pointer to the buffer 
-    // of half precision floats (Fp16s)
-    half* imageBufFp16 = LoadImage(imageFileName, networkDim, networkMean);
+	ENTER();
 
-    // calculate the length of the buffer that contains the half precision floats. 
-    // 3 channels * width * height * sizeof a 16bit float 
-    unsigned int lenBufFp16 = 3*networkDim*networkDim*sizeof(*imageBufFp16);
-
-    // start the inference with mvncLoadTensor()
-    retCode = api->load_tensor(graphHandle, imageBufFp16, lenBufFp16, NULL);
-    free(imageBufFp16);
-    if (retCode != MVNC_OK)
-    {   // error loading tensor
-        printf("Error - Could not load tensor\n");
-        printf("    mvncStatus from mvncLoadTensor is: %d\n", retCode);
-        return false;
-    }
-
-    // the inference has been started, now call mvncGetResult() for the
-    // inference result 
-    printf("Successfully loaded the tensor for image %s\n", imageFileName);
-    
-    void* resultData16;
-    void* userParam;
-    unsigned int lenResultData;
-    retCode = api->get_result(graphHandle, &resultData16, &lenResultData, &userParam);
-    if (retCode != MVNC_OK)
-    {
-        printf("Error - Could not get result for image %s\n", imageFileName);
-        printf("    mvncStatus from mvncGetResult is: %d\n", retCode);
-        return false;
-    }
-
-    // Successfully got the result.  The inference result is in the buffer pointed to by resultData
-    printf("Successfully got the inference result for image %s\n", imageFileName);
-    //printf("resultData is %d bytes which is %d 16-bit floats.\n", lenResultData, lenResultData/(int)sizeof(half));
-
-    // convert half precision floats to full floats
-    int numResults = lenResultData / sizeof(half);
-    float* resultData32;
-    resultData32 = (float*)malloc(numResults * sizeof(*resultData32));
-    fp16tofloat(resultData32, (unsigned char*)resultData16, numResults);
-
-    float maxResult = 0.0;
-    int maxIndex = -1;
-    for (int index = 0; index < numResults; index++)
-    {
-        // printf("Category %d is: %f\n", index, resultData32[index]);
-        if (resultData32[index] > maxResult)
-        {
-            maxResult = resultData32[index];
-            maxIndex = index;
-        }
-    }
-    printf("Index of top result is: %d\n", maxIndex);
-    printf("Probability of top result is: %f\n", resultData32[maxIndex]);
-	return true;
+	// LoadImage will read image from disk, convert channels to floats
+	// subtract network mean for each value in each channel.  Then, convert
+	// floats to half precision floats and return pointer to the buffer
+	// of half precision floats (Fp16s)
+	half *imageBufFp16 = LoadImage(imageFileName, networkDim, networkMean);
+	
+	// calculate the length of the buffer that contains the half precision floats.
+	// 3 channels * width * height * sizeof a 16bit float
+	unsigned int lenBufFp16 = 3 * networkDim * networkDim * sizeof(*imageBufFp16);
+	
+	// start the inference with mvncLoadTensor()
+	retCode = api->load_tensor(graphHandle, imageBufFp16, lenBufFp16, NULL);
+	free(imageBufFp16);
+	if (retCode != MVNC_OK) {   // error loading tensor
+		LOGE("Error - Could not load tensor");
+		LOGE("    mvncStatus from mvncLoadTensor is: %d", retCode);
+		RETURN(false, bool);
+	}
+	
+	// the inference has been started, now call mvncGetResult() for the
+	// inference result
+	LOGD("Successfully loaded the tensor for image %s", imageFileName);
+	
+	void *resultData16;
+	void *userParam;
+	unsigned int lenResultData;
+	retCode = api->get_result(graphHandle, &resultData16, &lenResultData, &userParam);
+	if (retCode != MVNC_OK) {
+		LOGE("Error - Could not get result for image %s", imageFileName);
+		LOGE("    mvncStatus from mvncGetResult is: %d", retCode);
+		RETURN(false, bool);
+	}
+	
+	// Successfully got the result.  The inference result is in the buffer pointed to by resultData
+	LOGD("Successfully got the inference result for image %s", imageFileName);
+	//LOGD("resultData is %d bytes which is %d 16-bit floats.", lenResultData, lenResultData/(int)sizeof(half));
+	
+	// convert half precision floats to full floats
+	int numResults = lenResultData / sizeof(half);
+	float *resultData32;
+	resultData32 = (float *) malloc(numResults * sizeof(*resultData32));
+	fp16tofloat(resultData32, (unsigned char *) resultData16, numResults);
+	
+	float maxResult = 0.0;
+	int maxIndex = -1;
+	for (int index = 0; index < numResults; index++) {
+		// LOGD("Category %d is: %f", index, resultData32[index]);
+		if (resultData32[index] > maxResult) {
+			maxResult = resultData32[index];
+			maxIndex = index;
+		}
+	}
+	LOGD("Index of top result is: %d", maxIndex);
+	LOGD("Probability of top result is: %f", resultData32[maxIndex]);
+	
+	RETURN(true, bool);
 }
 
 // Main entry point for the program
 int run_test(MvNcApi *api, const std::string &base_path) {
-    void *devHandle1;
-    void *devHandle2;
-    void *graphHandleGoogleNet = NULL;
-    void *graphHandleSqueezeNet = NULL;
-
+	ENTER();
+	
+	void *devHandle1;
+	void *devHandle2;
+	void *graphHandleGoogleNet = NULL;
+	void *graphHandleSqueezeNet = NULL;
+	
 	devHandle1 = api->get_device(0);
 	devHandle2 = api->get_device(1);
 	if (!devHandle1 && !devHandle2) {
-		return -1;
+		RETURN(-1, int);
 	}
-
+	
 	if (devHandle1) {
 		std::string path = base_path;
 		if (!LoadGraphToNCS(api, devHandle1,
-			path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
-			&graphHandleGoogleNet)) {
-			return -2;
+		  path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
+		  &graphHandleGoogleNet)) {
+
+			RETURN(-2, int);
 		}
 	}
 	if (devHandle2) {
 		std::string path = base_path;
 		if (!LoadGraphToNCS(api, devHandle2,
-			path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
-			&graphHandleSqueezeNet)) {
-
+		  path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
+		  &graphHandleSqueezeNet)) {
+			
 			if (graphHandleGoogleNet) {
 				api->deallocate_graph(graphHandleGoogleNet);
 			}
 			graphHandleGoogleNet = NULL;
-			return -2;
+
+			RETURN(-2, int);
 		}
 	}
-
+	
 	if (devHandle1) {
 		std::string path = base_path;
-		printf("\n--- NCS 1 inference ---\n");
+		LOGV("--- NCS 1 inference ---");
 		DoInferenceOnImageFile(api, graphHandleGoogleNet,
-			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
-			networkDimGoogleNet, networkMeanGoogleNet);
-		printf("-----------------------\n");
+		  path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
+		  networkDimGoogleNet, networkMeanGoogleNet);
+		LOGV("-----------------------");
 	}
-
+	
 	if (devHandle2) {
 		std::string path = base_path;
-		printf("\n--- NCS 2 inference ---\n");
+		LOGV("--- NCS 2 inference ---");
 		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
-			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
-			networkDimSqueezeNet, networkMeanSqueezeNet);
-		printf("-----------------------\n");
+		  path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
+		  networkDimSqueezeNet, networkMeanSqueezeNet);
+		LOGV("-----------------------");
 	}
-
+	
 	if (graphHandleSqueezeNet) {
 		api->deallocate_graph(graphHandleSqueezeNet);
-	    graphHandleSqueezeNet = NULL;
+		graphHandleSqueezeNet = NULL;
 	}
 	if (graphHandleGoogleNet) {
 		api->deallocate_graph(graphHandleGoogleNet);
 		graphHandleGoogleNet = NULL;
 	}
-	return 0;
+	
+	RETURN(0, int);
 }

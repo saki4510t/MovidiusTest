@@ -352,7 +352,7 @@ public class MainActivity extends AppCompatActivity
 	private void initView() {
 		// Example of a call to a native method
 		TextView tv = (TextView) findViewById(R.id.sample_text);
-		tv.setText("Hello world");
+		tv.setText("Hello Movidius");
 		mRootView = findViewById(R.id.activity);
 	}
 

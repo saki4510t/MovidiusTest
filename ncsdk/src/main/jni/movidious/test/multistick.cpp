@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 
 #include "mvnc_api.h"
 
@@ -34,15 +35,15 @@
 // from current director to examples base director
 // #define APP_BASE_DIR "../"
 
-#define EXAMPLES_BASE_DIR "../../../"
+#define EXAMPLES_BASE_DIR "data/"
 
 // graph file names - assume the graph file is in the current directory.
-#define GOOGLENET_GRAPH_FILE_NAME "googlenet.graph"
-#define SQUEEZENET_GRAPH_FILE_NAME "squeezenet.graph"
+#define GOOGLENET_GRAPH_FILE_NAME EXAMPLES_BASE_DIR "graphs/googlenet.graph"
+#define SQUEEZENET_GRAPH_FILE_NAME EXAMPLES_BASE_DIR "graphs/squeezenet.graph"
 
 // image file name - assume we are running in this directory: ncsdk/examples/caffe/GoogLeNet/cpp
-#define GOOGLENET_IMAGE_FILE_NAME EXAMPLES_BASE_DIR "data/images/nps_electric_guitar.png"
-#define SQUEEZENET_IMAGE_FILE_NAME EXAMPLES_BASE_DIR "data/images/nps_baseball.png"
+#define GOOGLENET_IMAGE_FILE_NAME EXAMPLES_BASE_DIR "images/nps_electric_guitar.png"
+#define SQUEEZENET_IMAGE_FILE_NAME EXAMPLES_BASE_DIR "images/nps_baseball.png"
 
 using namespace serenegiant::usb::ncs;
 
@@ -312,7 +313,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 }
 
 // Main entry point for the program
-int run(MvNcApi *api)
+int run(MvNcApi *api, std::string &base_path)
 {
     mvncStatus retCode;
     void *devHandle1;
@@ -327,14 +328,19 @@ int run(MvNcApi *api)
 	}
 
 	if (devHandle1) {
-		// FIXME ここのgraphファイルのpathは読み込みアクセス可能なところに変えなあかん
-		if (!LoadGraphToNCS(api, devHandle1, GOOGLENET_GRAPH_FILE_NAME, &graphHandleGoogleNet)) {
+		std::string path = base_path;
+		if (!LoadGraphToNCS(api, devHandle1,
+			path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleGoogleNet)) {
 			return -2;
 		}
 	}
 	if (devHandle2) {
-		// FIXME ここのgraphファイルのpathは読み込みアクセス可能なところに変えなあかん
-		if (!LoadGraphToNCS(api, devHandle2, SQUEEZENET_GRAPH_FILE_NAME, &graphHandleSqueezeNet)) {
+		std::string path = base_path;
+		if (!LoadGraphToNCS(api, devHandle2,
+			path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleSqueezeNet)) {
+
 			if (graphHandleGoogleNet) {
 				api->deallocate_graph(graphHandleGoogleNet);
 			}
@@ -343,13 +349,23 @@ int run(MvNcApi *api)
 		}
 	}
 
-    printf("\n--- NCS 1 inference ---\n");
-    DoInferenceOnImageFile(api, graphHandleGoogleNet, GOOGLENET_IMAGE_FILE_NAME, networkDimGoogleNet, networkMeanGoogleNet);
-    printf("-----------------------\n");
+	if (devHandle1) {
+		std::string path = base_path;
+		printf("\n--- NCS 1 inference ---\n");
+		DoInferenceOnImageFile(api, graphHandleGoogleNet,
+			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
+			networkDimGoogleNet, networkMeanGoogleNet);
+		printf("-----------------------\n");
+	}
 
-    printf("\n--- NCS 2 inference ---\n");
-    DoInferenceOnImageFile(api, graphHandleSqueezeNet, SQUEEZENET_IMAGE_FILE_NAME, networkDimSqueezeNet, networkMeanSqueezeNet);
-    printf("-----------------------\n");
+	if (devHandle2) {
+		std::string path = base_path;
+		printf("\n--- NCS 2 inference ---\n");
+		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
+			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
+			networkDimSqueezeNet, networkMeanSqueezeNet);
+		printf("-----------------------\n");
+	}
 
 	if (graphHandleSqueezeNet) {
 		api->deallocate_graph(graphHandleSqueezeNet);

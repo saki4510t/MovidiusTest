@@ -362,11 +362,14 @@ public class MainActivity extends AppCompatActivity
 					@Override
 					public void run() {
 						Log.i(TAG, "start");
-						final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+						final File dir = new File(
+							Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+							"MovidiusTest");
 						String dataPath = dir.getAbsolutePath();
 						if (!dataPath.endsWith("/")) {
 							dataPath = dataPath + "/";
 						}
+						if (DEBUG) Log.v(TAG, "dataPath=" + dataPath);
 						try {
 							mMvNcAPI.run(dataPath);
 						} catch (final Exception e) {

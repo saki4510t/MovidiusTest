@@ -414,7 +414,7 @@ int MvNcApi::run(const char *data_path) {
 //======================================================================
 mvncStatus MvNcApi::allocate_graph(
 	const void *device_handle, void **graph_handle,
-	const void *graph_file, const size_t graph_file_length) {
+	const void *graph_file, const size_t &graph_file_length) {
 
 	if (!device_handle || !graph_handle || !graph_file)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -449,7 +449,7 @@ mvncStatus MvNcApi::allocate_graph(
 	}
 	if (!d) {
 		lock.unlock();
-		LOGE("could not find specific device 0x%08p", device_handle);
+		LOGE("could not find specific device %p", device_handle);
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
 
@@ -548,8 +548,8 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 }
 
 mvncStatus MvNcApi::set_graph_option(
-	const void *graph_handle, const int option,
-	const void *data, const size_t data_length) {
+	const void *graph_handle, const int &option,
+	const void *data, const size_t &data_length) {
 
 	if (!graph_handle || !data || data_length != 4)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -583,10 +583,10 @@ mvncStatus MvNcApi::set_graph_option(
 }
 
 mvncStatus MvNcApi::get_graph_option(
-	const void *graph_handle, const int option,
-	void *data, unsigned int *data_length) {
+	const void *graph_handle, const int &option,
+	void *data, size_t &data_length) {
 
-	if (!graph_handle || !data || !data_length)
+	if (!graph_handle || !data)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 
 	Graph *g = (Graph *)graph_handle;
@@ -601,24 +601,24 @@ mvncStatus MvNcApi::get_graph_option(
 	switch (option) {
 	case MVNC_ITERATIONS:
 		*(int *) data = g->iterations;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_NETWORK_THROTTLE:
 		*(int *) data = g->network_throttle;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_DONT_BLOCK:
 		*(int *) data = g->dont_block;
 
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_TIME_TAKEN:
 		*(float **) data = g->time_taken;
-		*data_length = sizeof(*g->time_taken) * g->nstages;
+		data_length = sizeof(*g->time_taken) * g->nstages;
 		break;
 	case MVNC_DEBUG_INFO:
 		*(char **) data = g->debug_buffer;
-		*data_length = DEBUG_BUFFER_SIZE;
+		data_length = DEBUG_BUFFER_SIZE;
 		break;
 	default:
 		g->dev->lock.unlock();
@@ -631,8 +631,10 @@ mvncStatus MvNcApi::get_graph_option(
 
 mvncStatus MvNcApi::set_global_option(
 	const int option, const void *data,
-	const unsigned int data_length)
+	const size_t &data_length)
 {
+	ENTER();
+
 	if (!data || data_length != 4)
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 
@@ -647,16 +649,19 @@ mvncStatus MvNcApi::set_global_option(
 	RETURN(MVNC_OK, mvncStatus);
 }
 
-mvncStatus MvNcApi::get_global_option(const int option,
-	void *data, unsigned int *data_length)
+mvncStatus MvNcApi::get_global_option(const int &option,
+	void *data, size_t &data_length)
 {
-	if (!data || !data_length)
+	ENTER();
+
+	if (!data) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	switch (option) {
 	case MVNC_LOG_LEVEL:
 		*(int *) data = log_level;
-		*data_length = sizeof(log_level);
+		data_length = sizeof(log_level);
 		break;
 	default:
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -666,7 +671,7 @@ mvncStatus MvNcApi::get_global_option(const int option,
 
 mvncStatus MvNcApi::set_device_option(
 	const void *device_handle, const int &option,
-	const void *data, const unsigned int data_length) {
+	const void *data, const size_t &data_length) {
 
 	ENTER();
 
@@ -717,8 +722,8 @@ mvncStatus MvNcApi::set_device_option(
 }
 
 mvncStatus MvNcApi::get_device_option(
-	const void *device_handle, const int option,
-	void *data, unsigned int *data_length)
+	const void *device_handle, const int &option,
+	void *data, size_t &data_length)
 {
 	ENTER();
 
@@ -745,27 +750,27 @@ mvncStatus MvNcApi::get_device_option(
 	switch (option) {
 	case MVNC_TEMP_LIM_LOWER:
 		*(float *) data = d->temp_lim_lower;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_TEMP_LIM_HIGHER:
 		*(float *) data = d->temp_lim_upper;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_BACKOFF_TIME_NORMAL:
 		*(int *) data = d->backoff_time_normal;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_BACKOFF_TIME_HIGH:
 		*(int *) data = d->backoff_time_high;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_BACKOFF_TIME_CRITICAL:
 		*(int *) data = d->backoff_time_critical;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_TEMPERATURE_DEBUG:
 		*(int *) data = d->temperature_debug;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	case MVNC_THERMAL_STATS:
 		if (!d->thermal_stats) {
@@ -773,7 +778,7 @@ mvncStatus MvNcApi::get_device_option(
 			RETURN(MVNC_NO_DATA, mvncStatus);
 		}
 		*(float **) data = d->thermal_stats;
-		*data_length = THERMAL_BUFFER_SIZE;
+		data_length = THERMAL_BUFFER_SIZE;
 		break;
 	case MVNC_OPTIMISATION_LIST:
 		rc = get_optimisation_list(d);
@@ -782,11 +787,11 @@ mvncStatus MvNcApi::get_device_option(
 			RETURN(rc, mvncStatus);
 		}
 		*(char **) data = d->optimisation_list;
-		*data_length = OPTIMISATION_LIST_BUFFER_SIZE;
+		data_length = OPTIMISATION_LIST_BUFFER_SIZE;
 		break;
 	case MVNC_THERMAL_THROTTLING_LEVEL:
 		*(int *) data = d->throttle_happened;
-		*data_length = sizeof(int);
+		data_length = sizeof(int);
 		break;
 	default:
 		d->lock.unlock();
@@ -799,7 +804,7 @@ mvncStatus MvNcApi::get_device_option(
 
 mvncStatus MvNcApi::load_tensor(
 	const void *graph_handle,
-	const void *input_tensor, unsigned int input_tensor_length,
+	const void *input_tensor, const size_t &input_tensor_length,
 	void *userParam) {
 
 	if (!graph_handle || !input_tensor || input_tensor_length < 2) {
@@ -857,7 +862,7 @@ mvncStatus MvNcApi::load_tensor(
 
 mvncStatus MvNcApi::get_result(
 	const void *graph_handle,
-	void **output_data, unsigned int *output_data_length,
+	void **output_data, size_t &output_data_length,
 	void **user_param) {
 
 	ENTER();
@@ -865,8 +870,9 @@ mvncStatus MvNcApi::get_result(
 	mvncStatus rc;
 	int unlock_own = 0;
 
-	if (!graph_handle || !output_data || !output_data_length)
+	if (!graph_handle || !output_data) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
@@ -920,7 +926,7 @@ mvncStatus MvNcApi::get_result(
 	g->dev->throttle_happened = *(int *) (g->aux_buffer + DEBUG_BUFFER_SIZE
 						+ THERMAL_BUFFER_SIZE);
 	*output_data = g->output_data;
-	*output_data_length = 2 * g->noutputs;
+	output_data_length = 2 * g->noutputs;
 	*user_param = g->user_param[g->output_idx];
 	g->output_idx = !g->output_idx;
 	g->have_data--;

@@ -47,32 +47,32 @@ public:
 	
 	mvncStatus allocate_graph(
 		const void *device_handle, void **graph_handle,
-		const void *graph_file, const size_t graph_file_length);
+		const void *graph_file, const size_t &graph_file_length);
 	mvncStatus deallocate_graph(void *graph_handle);
 	mvncStatus set_graph_option(
-		const void *graph_handle, const int option,
-		const void *data, const size_t data_length);
+		const void *graph_handle, const int &option,
+		const void *data, const size_t &data_length);
 	mvncStatus get_graph_option(
-		const void *graph_handle, const int option,
-		void *data, unsigned int *data_length);
+		const void *graph_handle, const int &option,
+		void *data, size_t &data_length);
 	mvncStatus set_global_option(
 		const int option, const void *data,
-		const unsigned int data_length);
-	mvncStatus get_global_option(const int option,
-		void *data, unsigned int *data_length);
+		const size_t &data_length);
+	mvncStatus get_global_option(const int &option,
+		void *data, size_t &data_length);
 	mvncStatus set_device_option(
 		const void *device_handle, const int &option,
-		const void *data, const unsigned int data_length);
+		const void *data, const size_t &data_length);
 	mvncStatus get_device_option(
-		const void *device_handle, const int option,
-		void *data, unsigned int *data_length);
+		const void *device_handle, const int &option,
+		void *data, size_t &data_length);
 	mvncStatus load_tensor(
 		const void *graph_handle,
-		const void *input_tensor, unsigned int input_tensor_length,
+		const void *input_tensor, const size_t &input_tensor_length,
 		void *userParam);
 	mvncStatus get_result(
-	  	const void *graph_hHandle,
-	  	void **output_data, unsigned int *output_data_length,
+	  	const void *graph_handle,
+	  	void **output_data, size_t &output_data_length,
 	  	void **user_param);
 };
 

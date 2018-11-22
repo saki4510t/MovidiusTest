@@ -128,7 +128,7 @@ int UsbDataLink::get_status(myriadStatus_t &myriad_state) {
 }
 
 int UsbDataLink::set_data(const char *name,
-	const void *data, const unsigned int &length,
+	const void *data, const uint32_t &length,
 	const uint8_t &host_ready) {
 
 	ENTER();
@@ -144,7 +144,7 @@ int UsbDataLink::set_data(const char *name,
 		LOGE("write failed, err=%d", err);
 		RETURN(err, int);
 	}
-	unsigned int operation_permit = 0xFFFF;
+	uint32_t operation_permit = 0xFFFF;
 	err = read(&operation_permit, sizeof(operation_permit));
 	if (UNLIKELY(err)) {
 		LOGE("read failed, err=%d", err);
@@ -161,7 +161,7 @@ int UsbDataLink::set_data(const char *name,
 }
 
 int UsbDataLink::get_data(const char *name,
-	void *data, const unsigned int &length, const unsigned int &offset,
+	void *data, const uint32_t &length, const uint32_t &offset,
 	const uint8_t &host_ready) {
 
 	ENTER();
@@ -179,7 +179,7 @@ int UsbDataLink::get_data(const char *name,
 		RETURN(err, int);
 	}
 
-	unsigned int operation_permit = 0xFFFF;
+	uint32_t operation_permit = 0xFFFF;
 	err = read(&operation_permit, sizeof(operation_permit));
 	if (LIKELY(!err)) {
 		if (operation_permit == 0xABCD) {

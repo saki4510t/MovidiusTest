@@ -260,8 +260,8 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	
 	void *resultData16;
 	void *userParam;
-	unsigned int lenResultData;
-	retCode = api->get_result(graphHandle, &resultData16, &lenResultData, &userParam);
+	size_t lenResultData;
+	retCode = api->get_result(graphHandle, &resultData16, lenResultData, &userParam);
 	if (retCode != MVNC_OK) {
 		LOGE("Error - Could not get result for image %s", imageFileName);
 		LOGE("    mvncStatus from get_result is: %d", retCode);
@@ -273,7 +273,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	//LOGD("resultData is %d bytes which is %d 16-bit floats.", lenResultData, lenResultData/(int)sizeof(half));
 	
 	// convert half precision floats to full floats
-	int numResults = lenResultData / sizeof(half);
+	size_t numResults = lenResultData / sizeof(half);
 	float *resultData32;
 	resultData32 = (float *) malloc(numResults * sizeof(*resultData32));
 	fp16tofloat(resultData32, (unsigned char *) resultData16, numResults);

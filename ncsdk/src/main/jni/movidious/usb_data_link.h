@@ -48,7 +48,6 @@ public:
 	virtual int get_data(const char *name,
 		void *data, const unsigned int &length, const unsigned int &offset,
 		const uint8_t &host_ready);
-	virtual int reset_all();
 };
 
 }	// namespace ncs

@@ -195,14 +195,6 @@ int UsbDataLink::get_data(const char *name,
 	RETURN(err, int);
 }
 
-int UsbDataLink::reset_all() {
-	ENTER();
-	
-	// FIXME 未実装
-
-	RETURN(-1, int);
-}
-
 //================================================================================
 #define USB_ENDPOINT_IN 	0x81
 #define USB_ENDPOINT_OUT 	0x01

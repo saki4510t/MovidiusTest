@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +31,7 @@ import com.serenegiant.utils.PermissionCheck;
 import com.serenegiant.uvc.CameraDialogV4;
 import com.serenegiant.uvc.ICameraDialogListener;
 
+import java.io.File;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
@@ -351,8 +354,29 @@ public class MainActivity extends AppCompatActivity
 //================================================================================
 	private void initView() {
 		// Example of a call to a native method
-		TextView tv = (TextView) findViewById(R.id.sample_text);
-		tv.setText("Hello Movidius");
+		final Button button = findViewById(R.id.button);
+		button.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						Log.i(TAG, "start");
+						final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+						String dataPath = dir.getAbsolutePath();
+						if (!dataPath.endsWith("/")) {
+							dataPath = dataPath + "/";
+						}
+						try {
+							mMvNcAPI.run(dataPath);
+						} catch (final Exception e) {
+							Log.w(TAG, e);
+						}
+						Log.i(TAG, "finished!");
+					}
+				}, TAG).run();
+			}
+		});
 		mRootView = findViewById(R.id.activity);
 	}
 

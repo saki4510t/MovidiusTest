@@ -97,7 +97,7 @@ class Graph {
 	char *debug_buffer;
 	float *time_taken;
 	void *user_param[2];
-	void *output_data;
+	fp16_t *output_data;
 
 public:
 	Graph(Device *device)
@@ -397,17 +397,20 @@ mvncStatus MvNcApi::allocate_graph(
 	}
 
 	g->debug_buffer = g->aux_buffer;
+	// FIXME エンディアンの変換が必要な気がする, 32ビットのfloatだからfp32_tにしてから変換？
 	g->time_taken = (float *) (g->aux_buffer + 224);
 
 	// output_data
-	g->output_data = calloc(noutputs, 2);
+	g->output_data = new fp16_t[noutputs];
 	if (!g->output_data) {
 		free(g->aux_buffer);
-		free(g);
+		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
+	memset(g->output_data, 0, noutputs + sizeof(fp16_t));
 
+	// FIXME エンディアンの変換が必要な気がする, 32ビットのfloatだからfp32_tにしてから変換？
 	g->dev->thermal_stats = (float *) (g->aux_buffer + DEBUG_BUFFER_SIZE);
 
 	g->iterations = 1;
@@ -453,8 +456,9 @@ mvncStatus MvNcApi::set_graph_option(
 
 	ENTER();
 
-	if (!graph_handle || !data || data_length != 4)
+	if (!graph_handle || !data || data_length != 4) {	// FIXME data_lenが4バイト固定なのはいかん気がする
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
@@ -716,7 +720,7 @@ mvncStatus MvNcApi::get_device_option(
 
 mvncStatus MvNcApi::load_tensor(
 	const void *graph_handle,
-	const void *input_tensor, const size_t &input_tensor_length,
+	const fp16_t *input_tensor, const size_t &input_tensor_length,
 	void *userParam) {
 
 	if (!graph_handle || !input_tensor || input_tensor_length < 2) {
@@ -775,7 +779,7 @@ mvncStatus MvNcApi::load_tensor(
 
 mvncStatus MvNcApi::get_result(
 	const void *graph_handle,
-	void **output_data, size_t &output_data_length,
+	fp16_t **output_data, size_t &output_data_length,
 	void **user_param) {
 
 	ENTER();
@@ -812,13 +816,14 @@ mvncStatus MvNcApi::get_result(
 		g->dev->lock.lock();
 		lock.unlock();
 		if (!g->dev->get_data("output", g->output_data,
-			2 * g->noutputs, 0, 0)) {
+			sizeof(fp16_t) * g->noutputs, 0, 0)) {
 
 			unsigned int length = DEBUG_BUFFER_SIZE + THERMAL_BUFFER_SIZE +
 				 sizeof(int) + sizeof(*g->time_taken) * g->nstages;
 
 			if (g->dev->get_data("auxBuffer", g->aux_buffer,
 				 length, 0, g->have_data == 2)) {
+
 				g->failed = 1;
 				g->dev->lock.unlock();
 				RETURN(MVNC_ERROR, mvncStatus);
@@ -838,7 +843,7 @@ mvncStatus MvNcApi::get_result(
 	g->dev->throttle_happened = *(int *) (g->aux_buffer + DEBUG_BUFFER_SIZE
 						+ THERMAL_BUFFER_SIZE);
 	*output_data = g->output_data;
-	output_data_length = 2 * g->noutputs;
+	output_data_length = g->noutputs * sizeof(fp16_t);
 	*user_param = g->user_param[g->output_idx];
 	g->output_idx = !g->output_idx;
 	g->have_data--;

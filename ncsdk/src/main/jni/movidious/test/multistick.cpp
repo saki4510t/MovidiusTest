@@ -64,9 +64,9 @@
 using namespace serenegiant::usb::ncs;
 
 
-// 16 bits.  will use this to store half precision floats since C++ has no 
-// built in support for it.
-typedef unsigned short half;
+//// 16 bits.  will use this to store half precision floats since C++ has no
+//// built in support for it.
+//typedef unsigned short half; // saki replace with fp16_t
 
 // GoogleNet image dimensions, network mean values for each channel in BGR order.
 const unsigned int networkDimGoogleNet = 224;
@@ -77,7 +77,7 @@ float networkMeanSqueezeNet[] = {0.40787054 * 255.0, 0.45752458 * 255.0, 0.48109
 // Prototypes
 void *LoadGraphFile(const char *path, unsigned int *length);
 
-half *LoadImage(const char *path, unsigned int reqsize, float *mean);
+fp16_t *LoadImage(const char *path, unsigned int reqsize, float *mean);
 // end prototypes
 
 // Reads a graph file from the file system and copies it to a buffer
@@ -131,13 +131,13 @@ void *LoadGraphFile(const char *path, size_t &length) {
 // Returns a pointer to a buffer that is allocated internally via malloc.  this buffer contains
 //         the 16 bit float values that can be passed to mvncLoadTensor().  The returned buffer 
 //         will contain reqSize*reqSize*3 half floats.
-half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
+fp16_t *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 	ENTER();
 
 	int width, height, cp, i;
 	unsigned char *img, *imgresized;
 	float *imgfp32;
-	half *imgfp16;
+	fp16_t *imgfp16;
 	
 	img = stbi_load(path, &width, &height, &cp, 3);
 	if (!img) {
@@ -162,7 +162,7 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 		imgfp32[i] = imgresized[i];
 	}
 	free(imgresized);
-	imgfp16 = (half *) malloc(sizeof(*imgfp16) * reqSize * reqSize * 3);
+	imgfp16 = (fp16_t *) malloc(sizeof(*imgfp16) * reqSize * reqSize * 3);
 	if (!imgfp16) {
 		free(imgfp32);
 		perror("malloc");
@@ -181,7 +181,7 @@ half *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 		// uncomment to see what values are getting passed to load_tensor() before conversion to half float
 		//LOGD("Blue: %f, Grean: %f,  Red: %f", imgfp32[3*i+0], imgfp32[3*i+1], imgfp32[3*i+2]);
 	}
-	floattofp16((unsigned char *) imgfp16, imgfp32, 3 * reqSize * reqSize);
+	floattofp16(imgfp16, imgfp32, 3 * reqSize * reqSize);
 	free(imgfp32);
 
 	RET(imgfp16);
@@ -239,7 +239,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	// subtract network mean for each value in each channel.  Then, convert
 	// floats to half precision floats and return pointer to the buffer
 	// of half precision floats (Fp16s)
-	half *imageBufFp16 = LoadImage(imageFileName, networkDim, networkMean);
+	fp16_t *imageBufFp16 = LoadImage(imageFileName, networkDim, networkMean);
 	
 	// calculate the length of the buffer that contains the half precision floats.
 	// 3 channels * width * height * sizeof a 16bit float
@@ -258,7 +258,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	// inference result
 	LOGD("Successfully loaded the tensor for image %s", imageFileName);
 	
-	void *resultData16;
+	fp16_t *resultData16;
 	void *userParam;
 	size_t lenResultData;
 	retCode = api->get_result(graphHandle, &resultData16, lenResultData, &userParam);
@@ -273,10 +273,10 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	//LOGD("resultData is %d bytes which is %d 16-bit floats.", lenResultData, lenResultData/(int)sizeof(half));
 	
 	// convert half precision floats to full floats
-	size_t numResults = lenResultData / sizeof(half);
+	size_t numResults = lenResultData / sizeof(fp16_t);
 	float *resultData32;
 	resultData32 = (float *) malloc(numResults * sizeof(*resultData32));
-	fp16tofloat(resultData32, (unsigned char *) resultData16, numResults);
+	fp16tofloat(resultData32, resultData16, numResults);
 	
 	float maxResult = 0.0;
 	int maxIndex = -1;

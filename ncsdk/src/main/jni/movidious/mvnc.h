@@ -25,6 +25,9 @@ extern "C"
 
 #define MVNC_MAX_NAME_SIZE 28
 
+typedef uint16_t fp16_t;
+typedef uint32_t fp32_t;
+
 typedef enum {
 	MVNC_OK = 0,
 	MVNC_BUSY = -1,                     // Device is busy, retry later

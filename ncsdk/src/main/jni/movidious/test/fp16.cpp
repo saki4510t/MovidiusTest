@@ -35,7 +35,7 @@ static unsigned int half2float(unsigned short h)
     }
 }
 
-unsigned short float2half(unsigned f)
+fp16_t float2half(unsigned f)
 {
     unsigned f_exp, f_sig;
     unsigned short h_sgn, h_exp, h_sig;
@@ -150,23 +150,25 @@ unsigned short float2half(unsigned f)
 #endif
 }
 
-void floattofp16(unsigned char *dst, float *src, unsigned int nelem)
+void floattofp16(fp16_t *dst, const float *src, const size_t &nelem)
 {
 	unsigned i;
-	unsigned short *_dst = (unsigned short *)dst;
+	unsigned short *_dst = dst;
 	unsigned *_src = (unsigned *)src;
 	
-	for(i = 0; i < nelem; i++)
+	for (i = 0; i < nelem; i++) {
 		_dst[i] = float2half(_src[i]);
+	}
 }
 
-void fp16tofloat(float *dst, unsigned char *src, unsigned int nelem)
+void fp16tofloat(float *dst, const fp16_t *src, const size_t &nelem)
 {
 	unsigned i;
 	unsigned *_dst = (unsigned *)dst;
 	unsigned short *_src = (unsigned short *)src;
 	
-	for(i = 0; i < nelem; i++)
+	for (i = 0; i < nelem; i++) {
 		_dst[i] = half2float(_src[i]);
+    }
 }
 

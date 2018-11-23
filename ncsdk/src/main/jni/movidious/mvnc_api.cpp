@@ -447,6 +447,7 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 
 	d->lock.unlock();
 	lock.unlock();
+
 	RETURN(MVNC_OK, mvncStatus);
 }
 
@@ -488,6 +489,7 @@ mvncStatus MvNcApi::set_graph_option(
 	}
 
 	g->dev->lock.unlock();
+
 	RETURN(MVNC_OK, mvncStatus);
 }
 
@@ -538,6 +540,7 @@ mvncStatus MvNcApi::get_graph_option(
 	}
 
 	g->dev->lock.unlock();
+
 	RETURN(MVNC_OK, mvncStatus);
 }
 

@@ -50,15 +50,16 @@ public:
 		const void *graph_file, const size_t &graph_file_length);
 	mvncStatus deallocate_graph(void *graph_handle);
 	mvncStatus set_graph_option(
-		const void *graph_handle, const int &option,
+		const void *graph_handle, const mvncGraphOptions &option,
 		const void *data, const size_t &data_length);
 	mvncStatus get_graph_option(
-		const void *graph_handle, const int &option,
+		const void *graph_handle, const mvncGraphOptions &option,
 		void *data, size_t &data_length);
 	mvncStatus set_global_option(
-		const int option, const void *data,
-		const size_t &data_length);
-	mvncStatus get_global_option(const int &option,
+		const mvncGlobalOptions &option,
+		const void *data, const size_t &data_length);
+	mvncStatus get_global_option(
+	  	const mvncGlobalOptions &option,
 		void *data, size_t &data_length);
 	mvncStatus set_device_option(
 		const void *device_handle, const int &option,

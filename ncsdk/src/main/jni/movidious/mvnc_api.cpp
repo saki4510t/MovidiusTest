@@ -452,7 +452,7 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 }
 
 mvncStatus MvNcApi::set_graph_option(
-	const void *graph_handle, const int &option,
+	const void *graph_handle, const mvncGraphOptions &option,
 	const void *data, const size_t &data_length) {
 
 	ENTER();
@@ -494,7 +494,7 @@ mvncStatus MvNcApi::set_graph_option(
 }
 
 mvncStatus MvNcApi::get_graph_option(
-	const void *graph_handle, const int &option,
+	const void *graph_handle, const mvncGraphOptions &option,
 	void *data, size_t &data_length) {
 
 	ENTER();
@@ -545,8 +545,8 @@ mvncStatus MvNcApi::get_graph_option(
 }
 
 mvncStatus MvNcApi::set_global_option(
-	const int option, const void *data,
-	const size_t &data_length) {
+	const mvncGlobalOptions &option,
+	const void *data, const size_t &data_length) {
 
 	ENTER();
 
@@ -565,7 +565,8 @@ mvncStatus MvNcApi::set_global_option(
 	RETURN(MVNC_OK, mvncStatus);
 }
 
-mvncStatus MvNcApi::get_global_option(const int &option,
+mvncStatus MvNcApi::get_global_option(
+	const mvncGlobalOptions &option,
 	void *data, size_t &data_length) {
 
 	ENTER();
@@ -587,15 +588,15 @@ mvncStatus MvNcApi::get_global_option(const int &option,
 }
 
 mvncStatus MvNcApi::set_device_option(
-	const void *device_handle, const int &option,
+	const void *device_handle, const mvncDeviceOptions &option,
 	const void *data, const size_t &data_length) {
 
 	ENTER();
 
-	if (UNLIKELY(!device_handle && (option == MVNC_LOG_LEVEL))) {
+	if (UNLIKELY(!device_handle && !option)) {
 		LOGW("Warning: MVNC_LOG_LEVEL is not a Device Option,"
                 "please use mvncSetGlobalOption()!");
-		RETURN(set_global_option(option, data, data_length), mvncStatus);
+		RETURN(set_global_option(MVNC_LOG_LEVEL, data, data_length), mvncStatus);
 	}
 
 	if (!device_handle || !data || data_length != 4) {
@@ -640,17 +641,17 @@ mvncStatus MvNcApi::set_device_option(
 }
 
 mvncStatus MvNcApi::get_device_option(
-	const void *device_handle, const int &option,
+	const void *device_handle, const mvncDeviceOptions &option,
 	void *data, size_t &data_length)
 {
 	ENTER();
 
 	mvncStatus rc;
 
-	if (device_handle == 0 && option == MVNC_LOG_LEVEL) {
+	if (UNLIKELY(!device_handle && !option)) {
 		LOGW("Warning: MVNC_LOG_LEVEL is not a Device Option,"
                  "please use get_global_option()!");
-		RETURN(get_global_option(option, data, data_length), mvncStatus);
+		RETURN(get_global_option(MVNC_LOG_LEVEL, data, data_length), mvncStatus);
 	}
 
 	if (!device_handle || !data || !data_length)

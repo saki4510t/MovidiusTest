@@ -59,16 +59,16 @@ typedef enum {
 } mvncGlobalOptions;
 
 typedef enum {
-	MVNC_ITERATIONS = 0,        // Number of iterations per inference, int, normally 1, not for general use
-	MVNC_NETWORK_THROTTLE = 1,  // Measure temperature once per inference instead of once per layer, int, not for general use
-	MVNC_DONT_BLOCK = 2,        // LoadTensor will return BUSY instead of blocking, GetResult will return NO_DATA, mvnc_int32_t
-	MVNC_TIME_TAKEN = 1000,	    // Return time taken for inference (float *)
-	MVNC_DEBUG_INFO = 1001,     // Return debug info, string
+	MVNC_ITERATIONS = 0,        // Number of iterations per inference, int32_t, normally 1, not for general use
+	MVNC_NETWORK_THROTTLE = 1,  // Measure temperature once per inference instead of once per layer, int32_t, not for general use
+	MVNC_DONT_BLOCK = 2,        // LoadTensor will return BUSY instead of blocking, GetResult will return NO_DATA, int
+	MVNC_TIME_TAKEN = 1000,	    // Return time taken for inference (mvnc_float_t *)
+	MVNC_DEBUG_INFO = 1001,     // Return debug info, string, char *
 } mvncGraphOptions;
 
 typedef enum {
-	MVNC_TEMP_LIM_LOWER = 1,                // Temperature for short sleep, float, not for general use
-	MVNC_TEMP_LIM_HIGHER = 2,               // Temperature for long sleep, float, not for general use
+	MVNC_TEMP_LIM_LOWER = 1,                // Temperature for short sleep, mvnc_float_t, not for general use
+	MVNC_TEMP_LIM_HIGHER = 2,               // Temperature for long sleep, mvnc_float_t, not for general use
 	MVNC_BACKOFF_TIME_NORMAL = 3,           // Normal sleep in ms, mvnc_int32_t, not for general use
 	MVNC_BACKOFF_TIME_HIGH = 4,             // Short sleep in ms, mvnc_int32_t, not for general use
 	MVNC_BACKOFF_TIME_CRITICAL = 5,         // Long sleep in ms, mvnc_int32_t, not for general use

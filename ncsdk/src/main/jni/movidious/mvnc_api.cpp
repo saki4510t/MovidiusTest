@@ -369,6 +369,7 @@ mvncStatus MvNcApi::allocate_graph(
 		RETURN(MVNC_ERROR, mvncStatus);
 	}
 
+	// FIXME エンディアンの変換が必要な気がする
 	if (d->set_data("blobFile", graph_file, graph_file_length, 0)) {
 		lock.unlock();
 		RETURN(MVNC_ERROR, mvncStatus);
@@ -386,6 +387,7 @@ mvncStatus MvNcApi::allocate_graph(
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
 
+	// FIXME エンディアンの変換が必要な気がする
 	if (d->set_data("auxBuffer", g->aux_buffer,
 			    224 + nstages * sizeof(*g->time_taken), 0)) {
 		free(g->aux_buffer);
@@ -465,13 +467,16 @@ mvncStatus MvNcApi::set_graph_option(
 	lock.unlock();
 	switch (option) {
 	case MVNC_ITERATIONS:
-		g->iterations = *(int *) data;
+		// FIXME エンディアンの変換が必要な気がする
+		g->iterations = *(int32_t *) data;
 		break;
 	case MVNC_NETWORK_THROTTLE:
-		g->network_throttle = *(int *) data;
+		// FIXME エンディアンの変換が必要な気がする
+		g->network_throttle = *(int32_t *) data;
 		break;
 	case MVNC_DONT_BLOCK:
-		g->dont_block = *(int *) data;
+		// FIXME エンディアンの変換が必要な気がする
+		g->dont_block = *(int32_t *) data;
 		break;
 	default:
 		g->dev->lock.unlock();
@@ -653,6 +658,7 @@ mvncStatus MvNcApi::get_device_option(
 
 	d->lock.lock();
 	lock.unlock();
+
 	switch (option) {
 	case MVNC_TEMP_LIM_LOWER:
 		*(float *) data = d->temp_lim_lower;
@@ -752,6 +758,7 @@ mvncStatus MvNcApi::load_tensor(
 	g->dev->lock.lock();
 	lock.unlock();
 
+	// FIXME エンディアンの変換が必要な気がする
 	if (g->dev->set_data(g->input_idx ? "input2" : "input1",
 	     input_tensor, input_tensor_length, g->have_data == 0)) {
 		lock.unlock();
@@ -827,7 +834,7 @@ mvncStatus MvNcApi::get_result(
 			RETURN(MVNC_GONE, mvncStatus);
 		}
 	} while (time_in_seconds() < timeout);
-
+	// FIXME エンディアンの変換が必要な気がする
 	g->dev->throttle_happened = *(int *) (g->aux_buffer + DEBUG_BUFFER_SIZE
 						+ THERMAL_BUFFER_SIZE);
 	*output_data = g->output_data;
@@ -937,6 +944,8 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 	memset(config, 0, sizeof(config));
 	config[0] = 1;
 	config[1] = 1;
+
+	// FIXME エンディアンの変換が必要な気がする
 	if (d->set_data("config", config, sizeof(config), 1)) {
 		RETURN(MVNC_ERROR, mvncStatus);
 	}
@@ -955,7 +964,8 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 	}
 
 	if (d->get_data("optimizationList",
-			    d->optimisation_list, OPTIMISATION_LIST_BUFFER_SIZE, 0, 0)) {
+		d->optimisation_list, OPTIMISATION_LIST_BUFFER_SIZE, 0, 0)) {
+
 		RETURN(MVNC_ERROR, mvncStatus);
 	}
 
@@ -967,6 +977,7 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 	}
 
 	config[1] = 0;
+	// FIXME エンディアンの変換が必要な気がする
 	if (d->set_data("config", config, sizeof(config), 0)) {
 		RETURN(MVNC_ERROR, mvncStatus);
 	}
@@ -980,6 +991,7 @@ mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 
 	int32_t config[10];
 
+	// FIXME エンディアンの変換が必要な気がする
 	config[0] = 1;		// Version
 	config[1] = 0;		// Query disable
 	config[2] = g->iterations;

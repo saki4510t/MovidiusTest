@@ -538,8 +538,12 @@ public class MainActivity extends AppCompatActivity
 					return;
 				}
 				queueEvent(() -> {
-					dataLink.open(ctrlBlock);
-					mMvNcAPI.add(dataLink);
+					try {
+						dataLink.open(ctrlBlock);
+						mMvNcAPI.add(dataLink);
+					} catch (final Exception e) {
+						Log.w(TAG, e);
+					}
 				}, 0);
 			}
 		}

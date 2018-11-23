@@ -538,8 +538,9 @@ mvncStatus MvNcApi::set_global_option(
 
 	ENTER();
 
-	if (!data || data_length != 4)
+	if (!data || data_length != sizeof(int)) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	switch (option) {
 	case MVNC_LOG_LEVEL:
@@ -579,14 +580,15 @@ mvncStatus MvNcApi::set_device_option(
 
 	ENTER();
 
-	if (device_handle == 0 && option == MVNC_LOG_LEVEL) {
+	if (UNLIKELY(!device_handle && (option == MVNC_LOG_LEVEL))) {
 		LOGW("Warning: MVNC_LOG_LEVEL is not a Device Option,"
                 "please use mvncSetGlobalOption()!");
 		RETURN(set_global_option(option, data, data_length), mvncStatus);
 	}
 
-	if (!device_handle || !data || data_length != 4)
+	if (!device_handle || !data || data_length != 4) {
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
+	}
 
 	Device *d = (Device *)device_handle;
 	lock.lock();
@@ -928,7 +930,7 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 	}
 
 	d->optimisation_list = new char[OPTIMISATION_LIST_BUFFER_SIZE];
-	if (!d->optimisation_list) {
+	if (UNLIKELY(!d->optimisation_list)) {
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
 

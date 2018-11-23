@@ -62,10 +62,10 @@ public:
 	  	const mvncGlobalOptions &option,
 		void *data, size_t &data_length);
 	mvncStatus set_device_option(
-		const void *device_handle, const int &option,
+		const void *device_handle, const mvncDeviceOptions &option,
 		const void *data, const size_t &data_length);
 	mvncStatus get_device_option(
-		const void *device_handle, const int &option,
+		const void *device_handle, const mvncDeviceOptions &option,
 		void *data, size_t &data_length);
 	mvncStatus load_tensor(
 		const void *graph_handle,

@@ -50,10 +50,11 @@ friend MvNcApi;
 	UsbDataLink *data_link;
 	std::list<Graph *> graphs; // List of associated graphs
 
-	int backoff_time_normal, backoff_time_high, backoff_time_critical;
-	int temperature_debug, throttle_happened;
-	float temp_lim_upper, temp_lim_lower;
-	float *thermal_stats;
+	mvnc_int32_t config_backoff_time_normal, config_backoff_time_high, config_backoff_time_critical;
+	mvnc_int32_t config_temperature_debug;
+	mvnc_float_t config_temp_lim_upper, config_temp_lim_lower;
+	mvnc_float_t *thermal_stats;
+	mvnc_int32_t throttle_happened;
 	char *optimisation_list;
 
 	Device(UsbDataLink *_data_link);
@@ -89,13 +90,14 @@ class Graph {
 	int input_idx;
 	int output_idx;
 	int failed;
-	int iterations;
-	int network_throttle;
-	unsigned noutputs;
-	unsigned nstages;
+
+	mvnc_int32_t config_iterations;
+	mvnc_int32_t config_network_throttle;
+	uint32_t noutputs;
+	uint32_t nstages;
 	char *aux_buffer;
 	char *debug_buffer;
-	float *time_taken;
+	mvnc_float_t *time_taken;
 	void *user_param[2];
 	mvnc_fp16_t *output_data;
 
@@ -108,8 +110,8 @@ public:
 		input_idx(0),
 		output_idx(0),
 		failed(0),
-		iterations(0),
-		network_throttle(0),
+		config_iterations(0),
+		config_network_throttle(0),
 		noutputs(0),
 		nstages(0),
 		aux_buffer(NULL),
@@ -141,9 +143,9 @@ public:
 Device::Device(UsbDataLink *_data_link)
 :	data_link(_data_link),
 	thermal_stats(NULL), optimisation_list(NULL),
-	backoff_time_normal(0), backoff_time_high(100), backoff_time_critical(10000),
-	temperature_debug(0), throttle_happened(0),
-	temp_lim_upper(95), temp_lim_lower(85)
+	config_backoff_time_normal(0), config_backoff_time_high(100), config_backoff_time_critical(10000),
+	config_temperature_debug(0), throttle_happened(0),
+	config_temp_lim_upper(95), config_temp_lim_lower(85)
 {
 	ENTER();
 	EXIT();
@@ -202,7 +204,7 @@ static double time_in_seconds() {
 	RETURN(ts.tv_sec + ts.tv_nsec * 1e-9 - s, double);
 }
 
-static uint32_t read_32bits(const unsigned char *ptr) {
+static uint32_t read_32bits(const uint8_t *ptr) {
 	return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
 }
 
@@ -319,7 +321,7 @@ mvncStatus MvNcApi::allocate_graph(
 		RETURN(MVNC_UNSUPPORTED_GRAPH_FILE, mvncStatus);
 	}
 
-	unsigned char *graph = (unsigned char *) graph_file;
+	uint8_t *graph = (uint8_t *) graph_file;
 	if (graph[VERSION_OFFSET] != GRAPH_VERSION) {
 		RETURN(MVNC_UNSUPPORTED_GRAPH_FILE, mvncStatus);
 	}
@@ -398,7 +400,7 @@ mvncStatus MvNcApi::allocate_graph(
 
 	g->debug_buffer = g->aux_buffer;
 	// FIXME エンディアンの変換が必要な気がする, 32ビットのfloatだからfp32_tにしてから変換？
-	g->time_taken = (float *) (g->aux_buffer + 224);
+	g->time_taken = (mvnc_float_t *) (g->aux_buffer + 224);
 
 	// output_data
 	g->output_data = new mvnc_fp16_t[noutputs];
@@ -411,10 +413,10 @@ mvncStatus MvNcApi::allocate_graph(
 	memset(g->output_data, 0, noutputs + sizeof(mvnc_fp16_t));
 
 	// FIXME エンディアンの変換が必要な気がする, 32ビットのfloatだからfp32_tにしてから変換？
-	g->dev->thermal_stats = (float *) (g->aux_buffer + DEBUG_BUFFER_SIZE);
+	g->dev->thermal_stats = (mvnc_float_t *) (g->aux_buffer + DEBUG_BUFFER_SIZE);
 
-	g->iterations = 1;
-	g->network_throttle = 1;
+	g->config_iterations = 1;
+	g->config_network_throttle = 1;
 	d->graphs.push_back(g);
 	*graph_handle = g;
 	lock.unlock();
@@ -473,15 +475,14 @@ mvncStatus MvNcApi::set_graph_option(
 	switch (option) {
 	case MVNC_ITERATIONS:
 		// FIXME エンディアンの変換が必要な気がする
-		g->iterations = *(int32_t *) data;
+		g->config_iterations = *(int32_t *) data;
 		break;
 	case MVNC_NETWORK_THROTTLE:
 		// FIXME エンディアンの変換が必要な気がする
-		g->network_throttle = *(int32_t *) data;
+		g->config_network_throttle = *(int32_t *) data;
 		break;
 	case MVNC_DONT_BLOCK:
-		// FIXME エンディアンの変換が必要な気がする
-		g->dont_block = *(int32_t *) data;
+		g->dont_block = *(int *) data;
 		break;
 	default:
 		g->dev->lock.unlock();
@@ -514,12 +515,12 @@ mvncStatus MvNcApi::get_graph_option(
 	lock.unlock();
 	switch (option) {
 	case MVNC_ITERATIONS:
-		*(int *) data = g->iterations;
-		data_length = sizeof(int);
+		*(int *) data = g->config_iterations;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_NETWORK_THROTTLE:
-		*(int *) data = g->network_throttle;
-		data_length = sizeof(int);
+		*(int *) data = g->config_network_throttle;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_DONT_BLOCK:
 		*(int *) data = g->dont_block;
@@ -527,8 +528,8 @@ mvncStatus MvNcApi::get_graph_option(
 		data_length = sizeof(int);
 		break;
 	case MVNC_TIME_TAKEN:
-		*(float **) data = g->time_taken;
-		data_length = sizeof(*g->time_taken) * g->nstages;
+		*(mvnc_float_t **) data = g->time_taken;
+		data_length = sizeof(mvnc_float_t) * g->nstages;
 		break;
 	case MVNC_DEBUG_INFO:
 		*(char **) data = g->debug_buffer;
@@ -614,22 +615,22 @@ mvncStatus MvNcApi::set_device_option(
 	lock.unlock();
 	switch (option) {
 	case MVNC_TEMP_LIM_LOWER:
-		d->temp_lim_lower = *(float *) data;
+		d->config_temp_lim_lower = *(mvnc_float_t *) data;
 		break;
 	case MVNC_TEMP_LIM_HIGHER:
-		d->temp_lim_upper = *(float *) data;
+		d->config_temp_lim_upper = *(mvnc_float_t *) data;
 		break;
 	case MVNC_BACKOFF_TIME_NORMAL:
-		d->backoff_time_normal = *(int *) data;
+		d->config_backoff_time_normal = *(mvnc_int32_t *) data;
 		break;
 	case MVNC_BACKOFF_TIME_HIGH:
-		d->backoff_time_high = *(int *) data;
+		d->config_backoff_time_high = *(mvnc_int32_t *) data;
 		break;
 	case MVNC_BACKOFF_TIME_CRITICAL:
-		d->backoff_time_critical = *(int *) data;
+		d->config_backoff_time_critical = *(mvnc_int32_t *) data;
 		break;
 	case MVNC_TEMPERATURE_DEBUG:
-		d->temperature_debug = *(int *) data;
+		d->config_temperature_debug = *(mvnc_int32_t *) data;
 		break;
 	default:
 		d->lock.unlock();
@@ -669,35 +670,35 @@ mvncStatus MvNcApi::get_device_option(
 
 	switch (option) {
 	case MVNC_TEMP_LIM_LOWER:
-		*(float *) data = d->temp_lim_lower;
-		data_length = sizeof(int);
+		*(float *) data = d->config_temp_lim_lower;
+		data_length = sizeof(mvnc_float_t);
 		break;
 	case MVNC_TEMP_LIM_HIGHER:
-		*(float *) data = d->temp_lim_upper;
-		data_length = sizeof(int);
+		*(float *) data = d->config_temp_lim_upper;
+		data_length = sizeof(mvnc_float_t);
 		break;
 	case MVNC_BACKOFF_TIME_NORMAL:
-		*(int *) data = d->backoff_time_normal;
-		data_length = sizeof(int);
+		*(int *) data = d->config_backoff_time_normal;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_BACKOFF_TIME_HIGH:
-		*(int *) data = d->backoff_time_high;
-		data_length = sizeof(int);
+		*(int *) data = d->config_backoff_time_high;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_BACKOFF_TIME_CRITICAL:
-		*(int *) data = d->backoff_time_critical;
-		data_length = sizeof(int);
+		*(int *) data = d->config_backoff_time_critical;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_TEMPERATURE_DEBUG:
-		*(int *) data = d->temperature_debug;
-		data_length = sizeof(int);
+		*(int *) data = d->config_temperature_debug;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	case MVNC_THERMAL_STATS:
 		if (!d->thermal_stats) {
 			d->lock.unlock();
 			RETURN(MVNC_NO_DATA, mvncStatus);
 		}
-		*(float **) data = d->thermal_stats;
+		*(mvnc_float_t **) data = d->thermal_stats;
 		data_length = THERMAL_BUFFER_SIZE;
 		break;
 	case MVNC_OPTIMISATION_LIST:
@@ -710,8 +711,8 @@ mvncStatus MvNcApi::get_device_option(
 		data_length = OPTIMISATION_LIST_BUFFER_SIZE;
 		break;
 	case MVNC_THERMAL_THROTTLING_LEVEL:
-		*(int *) data = d->throttle_happened;
-		data_length = sizeof(int);
+		*(mvnc_int32_t *) data = d->throttle_happened;
+		data_length = sizeof(mvnc_int32_t);
 		break;
 	default:
 		d->lock.unlock();
@@ -823,7 +824,7 @@ mvncStatus MvNcApi::get_result(
 			sizeof(mvnc_fp16_t) * g->noutputs, 0, 0)) {
 
 			unsigned int length = DEBUG_BUFFER_SIZE + THERMAL_BUFFER_SIZE +
-				 sizeof(int) + sizeof(*g->time_taken) * g->nstages;
+				 sizeof(mvnc_int32_t) + sizeof(*g->time_taken) * g->nstages;
 
 			if (g->dev->get_data("auxBuffer", g->aux_buffer,
 				 length, 0, g->have_data == 2)) {
@@ -844,8 +845,8 @@ mvncStatus MvNcApi::get_result(
 		}
 	} while (time_in_seconds() < timeout);
 	// FIXME エンディアンの変換が必要な気がする
-	g->dev->throttle_happened = *(int *) (g->aux_buffer + DEBUG_BUFFER_SIZE
-						+ THERMAL_BUFFER_SIZE);
+	g->dev->throttle_happened = *(mvnc_int32_t *) (
+		g->aux_buffer + DEBUG_BUFFER_SIZE + THERMAL_BUFFER_SIZE);
 	*output_data = g->output_data;
 	output_data_length = g->noutputs * sizeof(mvnc_fp16_t);
 	*user_param = g->user_param[g->output_idx];
@@ -854,8 +855,9 @@ mvncStatus MvNcApi::get_result(
 
 	if (unlock_own) {
 		rc = *g->debug_buffer ? MVNC_MYRIAD_ERROR : MVNC_OK;
-		if (rc)
+		if (rc) {
 			g->failed = 1;
+		}
 		g->dev->lock.unlock();
 	} else {
 		rc = MVNC_TIMEOUT;
@@ -998,19 +1000,19 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 	ENTER();
 
-	int32_t config[10];
+	mvnc_int32_t config[10];
 
 	// FIXME エンディアンの変換が必要な気がする
 	config[0] = 1;		// Version
 	config[1] = 0;		// Query disable
-	config[2] = g->iterations;
-	config[3] = (int)g->dev->temp_lim_upper;
-	config[4] = (int)g->dev->temp_lim_lower;
-	config[5] = g->dev->backoff_time_normal;
-	config[6] = g->dev->backoff_time_high;
-	config[7] = g->dev->backoff_time_critical;
-	config[8] = g->dev->temperature_debug;
-	config[9] = g->network_throttle;
+	config[2] = g->config_iterations;
+	config[3] = (mvnc_int32_t)g->dev->config_temp_lim_upper;
+	config[4] = (mvnc_int32_t)g->dev->config_temp_lim_lower;
+	config[5] = g->dev->config_backoff_time_normal;
+	config[6] = g->dev->config_backoff_time_high;
+	config[7] = g->dev->config_backoff_time_critical;
+	config[8] = g->dev->config_temperature_debug;
+	config[9] = g->config_network_throttle;
 
 	if (g->dev->set_data("config", config, sizeof(config), 0)) {
 		RETURN(MVNC_ERROR, mvncStatus);

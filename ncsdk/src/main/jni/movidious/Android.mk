@@ -48,6 +48,7 @@ LOCAL_CFLAGS += -Wl,--version-script,movidius.map
 LOCAL_SRC_FILES := \
 	_onload.cpp \
 	usb_data_link.cpp \
+	mvnc.cpp \
 	mvnc_api.cpp \
 	serenegiant_ncsdk_mvncapi.cpp \
 	serenegiant_ncsdk_usbdatalink.cpp \

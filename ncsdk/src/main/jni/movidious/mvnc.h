@@ -27,8 +27,17 @@ extern "C"
 
 typedef uint16_t mvnc_fp16_t;
 typedef uint32_t mvnc_fp32_t;
-typedef int32_t mvnc_int_t;
-typedef uint32_t mvnc_uint_t;
+typedef int32_t mvnc_int32_t;
+typedef uint32_t mvnc_uint32_t;
+typedef float mvnc_float_t;
+
+int32_t mvnc_to_int32(const mvnc_int32_t &val);
+uint32_t mvnc_to_uint32(const mvnc_uint32_t &val);
+float mvnc_to_float(const mvnc_float_t &val);
+
+mvnc_int32_t int32_to_mvnc(const int32_t &val);
+mvnc_uint32_t uint32_to_mvnc(const uint32_t &val);
+mvnc_float_t float_to_mvnc(const float &val);
 
 typedef enum {
 	MVNC_OK = 0,
@@ -38,7 +47,7 @@ typedef enum {
 	MVNC_DEVICE_NOT_FOUND = -4,         // No device at the given index or name
 	MVNC_INVALID_PARAMETERS = -5,       // At least one of the given parameters is wrong
 	MVNC_TIMEOUT = -6,                  // Timeout in the communication with the device
-	MVNC_MVCMD_NOT_FOUND = -7,         // The file to boot Myriad was not found
+	MVNC_MVCMD_NOT_FOUND = -7,          // The file to boot Myriad was not found
 	MVNC_NO_DATA = -8,                  // No data to return, call LoadTensor first
 	MVNC_GONE = -9,                     // The graph or device has been closed during the operation
 	MVNC_UNSUPPORTED_GRAPH_FILE = -10,  // The graph file version is not supported
@@ -52,7 +61,7 @@ typedef enum {
 typedef enum {
 	MVNC_ITERATIONS = 0,        // Number of iterations per inference, int, normally 1, not for general use
 	MVNC_NETWORK_THROTTLE = 1,  // Measure temperature once per inference instead of once per layer, int, not for general use
-	MVNC_DONT_BLOCK = 2,        // LoadTensor will return BUSY instead of blocking, GetResult will return NO_DATA, int
+	MVNC_DONT_BLOCK = 2,        // LoadTensor will return BUSY instead of blocking, GetResult will return NO_DATA, mvnc_int32_t
 	MVNC_TIME_TAKEN = 1000,	    // Return time taken for inference (float *)
 	MVNC_DEBUG_INFO = 1001,     // Return debug info, string
 } mvncGraphOptions;
@@ -60,11 +69,11 @@ typedef enum {
 typedef enum {
 	MVNC_TEMP_LIM_LOWER = 1,                // Temperature for short sleep, float, not for general use
 	MVNC_TEMP_LIM_HIGHER = 2,               // Temperature for long sleep, float, not for general use
-	MVNC_BACKOFF_TIME_NORMAL = 3,           // Normal sleep in ms, int, not for general use
-	MVNC_BACKOFF_TIME_HIGH = 4,             // Short sleep in ms, int, not for general use
-	MVNC_BACKOFF_TIME_CRITICAL = 5,         // Long sleep in ms, int, not for general use
-	MVNC_TEMPERATURE_DEBUG = 6,             // Stop on critical temperature, int, not for general use
-	MVNC_THERMAL_STATS = 1000,              // Return temperatures, float *, not for general use
+	MVNC_BACKOFF_TIME_NORMAL = 3,           // Normal sleep in ms, mvnc_int32_t, not for general use
+	MVNC_BACKOFF_TIME_HIGH = 4,             // Short sleep in ms, mvnc_int32_t, not for general use
+	MVNC_BACKOFF_TIME_CRITICAL = 5,         // Long sleep in ms, mvnc_int32_t, not for general use
+	MVNC_TEMPERATURE_DEBUG = 6,             // Stop on critical temperature, mvnc_int32_t, not for general use
+	MVNC_THERMAL_STATS = 1000,              // Return temperatures, mvnc_float_t *, not for general use
 	MVNC_OPTIMISATION_LIST = 1001,          // Return optimisations list, char *, not for general use
 	MVNC_THERMAL_THROTTLING_LEVEL = 1002,	// 1=TEMP_LIM_LOWER reached, 2=TEMP_LIM_HIGHER reached
 } mvncDeviceOptions;

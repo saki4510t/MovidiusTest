@@ -17,11 +17,8 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class UsbDataLink extends NativeObject implements IDataLink {
 	private static final boolean DEBUG = true; // set false on production
@@ -32,11 +29,18 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 	}
 
 	private static final int VID_MOVIDIUS = 0x03e7;
-	private static final int PID_MOVIDIUS = 0x2150; // ==8528; Myriad2v2 ROM
 	// Once opened in VSC mode, VID/PID change
 	private static final int VID_MOVIDIUS_USB_BOOT = VID_MOVIDIUS;
-	private static final int PID_MOVIDIUS_USB_BOOT = 0xf63b; // ==63035;
+	/**
+	 * bootしたあとのpid
+	 * これはMovidius Neural Compute Stick とNeural Compute Stick 2で共通
+	 */
+	private static final int PID_MOVIDIUS_USB_BOOT = 0xf63b; // ==63035; これは
 
+	private static final int PID_SUPPORTED[] = {
+		0x2150, // == 8528; ma2450, Myriad2v2 ROM, Movidius Neural Compute Stick
+//		0x2485,	// == 9349; ma2480, Neural Compute Stick 2
+	};
 // [Movidius Neural Compute Stick]
 // 最初に接続した時はこのUsbDeviceが来る
 //	UsbDevice[mName=/dev/bus/usb/001/002,mVendorId=999,mProductId=8528,mClass=0,mSubclass=0,mProtocol=0,mManufacturerName=Movidius Ltd.,mProductName=Movidius MA2X5X,mVersion=2.0,mSerialNumber=03e72150,mConfigurations=[
@@ -106,18 +110,28 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 		@NonNull final USBMonitor.UsbControlBlock ctrlBlock) {
 
 		int result = -1;
-		
 		try {
 			mCtrlBlock = ctrlBlock.clone();
 			final int vid = mCtrlBlock.getVenderId();
 			final int pid = mCtrlBlock.getProductId();
-			if ((vid == VID_MOVIDIUS) && (pid == PID_MOVIDIUS)) {
-				usbBoot(mCtrlBlock, R.raw.mvncapi);
-				result = 0;
-			} else if ((vid == VID_MOVIDIUS_USB_BOOT)
+			
+			if ((vid == VID_MOVIDIUS_USB_BOOT)
 				&& (pid == PID_MOVIDIUS_USB_BOOT)) {
-
+			
 				result = nativeConnect(mNativePtr, mCtrlBlock.getFileDescriptor());
+			} else if (vid == VID_MOVIDIUS) {
+				boolean found = false;
+				for (int i = PID_SUPPORTED.length - 1; i >= 0; i--) {
+					if (pid == PID_SUPPORTED[i]) {
+						found = true;
+						break;
+					}
+				}
+				if (found) {
+					// FIXME Neural Compute Stick2だとnacsdk2.xにしないとだめかも
+					usbBoot(mCtrlBlock, R.raw.mvncapi);
+					result = 0;
+				}
 			}
 		} catch (final Exception e) {
 			result = -1;

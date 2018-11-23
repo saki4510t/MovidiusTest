@@ -97,7 +97,7 @@ class Graph {
 	char *debug_buffer;
 	float *time_taken;
 	void *user_param[2];
-	fp16_t *output_data;
+	mvnc_fp16_t *output_data;
 
 public:
 	Graph(Device *device)
@@ -401,14 +401,14 @@ mvncStatus MvNcApi::allocate_graph(
 	g->time_taken = (float *) (g->aux_buffer + 224);
 
 	// output_data
-	g->output_data = new fp16_t[noutputs];
+	g->output_data = new mvnc_fp16_t[noutputs];
 	if (!g->output_data) {
 		free(g->aux_buffer);
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
-	memset(g->output_data, 0, noutputs + sizeof(fp16_t));
+	memset(g->output_data, 0, noutputs + sizeof(mvnc_fp16_t));
 
 	// FIXME エンディアンの変換が必要な気がする, 32ビットのfloatだからfp32_tにしてから変換？
 	g->dev->thermal_stats = (float *) (g->aux_buffer + DEBUG_BUFFER_SIZE);
@@ -720,7 +720,7 @@ mvncStatus MvNcApi::get_device_option(
 
 mvncStatus MvNcApi::load_tensor(
 	const void *graph_handle,
-	const fp16_t *input_tensor, const size_t &input_tensor_length,
+	const mvnc_fp16_t *input_tensor, const size_t &input_tensor_length,
 	void *userParam) {
 
 	if (!graph_handle || !input_tensor || input_tensor_length < 2) {
@@ -779,7 +779,7 @@ mvncStatus MvNcApi::load_tensor(
 
 mvncStatus MvNcApi::get_result(
 	const void *graph_handle,
-	fp16_t **output_data, size_t &output_data_length,
+	mvnc_fp16_t **output_data, size_t &output_data_length,
 	void **user_param) {
 
 	ENTER();
@@ -816,7 +816,7 @@ mvncStatus MvNcApi::get_result(
 		g->dev->lock.lock();
 		lock.unlock();
 		if (!g->dev->get_data("output", g->output_data,
-			sizeof(fp16_t) * g->noutputs, 0, 0)) {
+			sizeof(mvnc_fp16_t) * g->noutputs, 0, 0)) {
 
 			unsigned int length = DEBUG_BUFFER_SIZE + THERMAL_BUFFER_SIZE +
 				 sizeof(int) + sizeof(*g->time_taken) * g->nstages;
@@ -843,7 +843,7 @@ mvncStatus MvNcApi::get_result(
 	g->dev->throttle_happened = *(int *) (g->aux_buffer + DEBUG_BUFFER_SIZE
 						+ THERMAL_BUFFER_SIZE);
 	*output_data = g->output_data;
-	output_data_length = g->noutputs * sizeof(fp16_t);
+	output_data_length = g->noutputs * sizeof(mvnc_fp16_t);
 	*user_param = g->user_param[g->output_idx];
 	g->output_idx = !g->output_idx;
 	g->have_data--;

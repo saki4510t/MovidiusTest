@@ -25,8 +25,8 @@ extern "C"
 
 #define MVNC_MAX_NAME_SIZE 28
 
-typedef uint16_t fp16_t;
-typedef uint32_t fp32_t;
+typedef uint16_t mvnc_fp16_t;
+typedef uint32_t mvnc_fp32_t;
 
 typedef enum {
 	MVNC_OK = 0,

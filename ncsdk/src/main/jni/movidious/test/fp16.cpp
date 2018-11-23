@@ -35,7 +35,7 @@ static unsigned int half2float(unsigned short h)
     }
 }
 
-fp16_t float2half(unsigned f)
+mvnc_fp16_t float2half(unsigned f)
 {
     unsigned f_exp, f_sig;
     unsigned short h_sgn, h_exp, h_sig;
@@ -150,7 +150,7 @@ fp16_t float2half(unsigned f)
 #endif
 }
 
-void floattofp16(fp16_t *dst, const float *src, const size_t &nelem)
+void floattofp16(mvnc_fp16_t *dst, const float *src, const size_t &nelem)
 {
 	unsigned i;
 	unsigned short *_dst = dst;
@@ -161,7 +161,7 @@ void floattofp16(fp16_t *dst, const float *src, const size_t &nelem)
 	}
 }
 
-void fp16tofloat(float *dst, const fp16_t *src, const size_t &nelem)
+void fp16tofloat(float *dst, const mvnc_fp16_t *src, const size_t &nelem)
 {
 	unsigned i;
 	unsigned *_dst = (unsigned *)dst;

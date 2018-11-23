@@ -68,11 +68,11 @@ public:
 		void *data, size_t &data_length);
 	mvncStatus load_tensor(
 		const void *graph_handle,
-		const fp16_t *input_tensor, const size_t &input_tensor_length,
+		const mvnc_fp16_t *input_tensor, const size_t &input_tensor_length,
 		void *userParam);
 	mvncStatus get_result(
 	  	const void *graph_handle,
-	  	fp16_t **output_data, size_t &output_data_length,
+	  	mvnc_fp16_t **output_data, size_t &output_data_length,
 	  	void **user_param);
 };
 

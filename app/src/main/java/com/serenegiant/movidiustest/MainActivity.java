@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity
 						}
 						Log.i(TAG, "finished!");
 					}
-				}, TAG).run();
+				}, TAG).start();
 			}
 		});
 		mRootView = findViewById(R.id.activity);

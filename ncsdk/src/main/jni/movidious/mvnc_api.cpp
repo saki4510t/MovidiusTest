@@ -802,7 +802,6 @@ mvncStatus MvNcApi::get_result(
 	do {
 		g->dev->lock.lock();
 		lock.unlock();
-		lock.unlock();
 		if (!g->dev->get_data("output", g->output_data,
 			2 * g->noutputs, 0, 0)) {
 

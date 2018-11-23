@@ -205,6 +205,7 @@ static double time_in_seconds() {
 }
 
 static uint32_t read_32bits(const uint8_t *ptr) {
+	// リトルエンディアン
 	return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
 }
 

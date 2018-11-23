@@ -131,7 +131,7 @@ public:
 		SAFE_DELETE(debug_buffer);
 		SAFE_DELETE(time_taken);
 		user_param[0] = user_param[1] = NULL;
-		SAFE_FREE(output_data);
+		SAFE_DELETE(output_data);
 
 		EXIT();
 	}
@@ -382,7 +382,7 @@ mvncStatus MvNcApi::allocate_graph(
 	// aux_buffer
 	g->aux_buffer = new char[224 + nstages * sizeof(*g->time_taken)];
 	if (!g->aux_buffer) {
-		free(g);
+		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
@@ -391,7 +391,7 @@ mvncStatus MvNcApi::allocate_graph(
 	if (d->set_data("auxBuffer", g->aux_buffer,
 			    224 + nstages * sizeof(*g->time_taken), 0)) {
 		free(g->aux_buffer);
-		free(g);
+		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_ERROR, mvncStatus);
 	}

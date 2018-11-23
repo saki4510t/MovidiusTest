@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include "mvnc.h"
 
-static unsigned int half2float(unsigned short h);
-unsigned short float2half(unsigned f);
+mvnc_fp32_t half2float(const mvnc_fp16_t &h);
+mvnc_fp16_t float2half(const mvnc_fp32_t &f);
 void floattofp16(mvnc_fp16_t *dst, const float *src, const size_t &nelem);
 void fp16tofloat(float *dst, const mvnc_fp16_t *src, const size_t &nelem);
 

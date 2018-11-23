@@ -14,14 +14,14 @@
 // limitations under the License.
 
 #if 0    // set 0 is you need debug log, otherwise set 1
-#ifndef LOG_NDEBUG
-#define	LOG_NDEBUG
-#endif
-#undef USE_LOGALL
+	#ifndef LOG_NDEBUG
+	#define	LOG_NDEBUG
+	#endif
+	#undef USE_LOGALL
 #else
-#define USE_LOGALL
-#undef LOG_NDEBUG
-#undef NDEBUG
+	#define USE_LOGALL
+	#undef LOG_NDEBUG
+	#undef NDEBUG
 #endif
 
 #include <stdio.h>
@@ -269,7 +269,7 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 	}
 	
 	// Successfully got the result.  The inference result is in the buffer pointed to by resultData
-	LOGD("Successfully got the inference result for image %s", imageFileName);
+	LOGI("Successfully got the inference result for image %s", imageFileName);
 	//LOGD("resultData is %d bytes which is %d 16-bit floats.", lenResultData, lenResultData/(int)sizeof(half));
 	
 	// convert half precision floats to full floats
@@ -287,8 +287,8 @@ bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
 			maxIndex = index;
 		}
 	}
-	LOGD("Index of top result is: %d", maxIndex);
-	LOGD("Probability of top result is: %f", resultData32[maxIndex]);
+	LOGI("Index of top result is: %d", maxIndex);
+	LOGI("Probability of top result is: %f", resultData32[maxIndex]);
 	
 	RETURN(true, bool);
 }
@@ -336,20 +336,20 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 	
 	if (devHandle1) {
 		std::string path = base_path;
-		LOGV("--- NCS 1 inference ---");
+		LOGI("--- NCS 1 inference ---");
 		DoInferenceOnImageFile(api, graphHandleGoogleNet,
-		  path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
-		  networkDimGoogleNet, networkMeanGoogleNet);
-		LOGV("-----------------------");
+			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
+			networkDimGoogleNet, networkMeanGoogleNet);
+		LOGI("-----------------------");
 	}
 	
 	if (devHandle2) {
 		std::string path = base_path;
-		LOGV("--- NCS 2 inference ---");
+		LOGI("--- NCS 2 inference ---");
 		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
-		  path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
-		  networkDimSqueezeNet, networkMeanSqueezeNet);
-		LOGV("-----------------------");
+			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
+			networkDimSqueezeNet, networkMeanSqueezeNet);
+		LOGI("-----------------------");
 	}
 	
 	if (graphHandleSqueezeNet) {

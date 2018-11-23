@@ -27,6 +27,8 @@ extern "C"
 
 typedef uint16_t mvnc_fp16_t;
 typedef uint32_t mvnc_fp32_t;
+typedef int32_t mvnc_int_t;
+typedef uint32_t mvnc_uint_t;
 
 typedef enum {
 	MVNC_OK = 0,

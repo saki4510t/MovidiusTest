@@ -901,7 +901,6 @@ mvncStatus MvNcApi::get_result(
 	if (unlock_own) {
 		rc = *g->debug_buffer ? MVNC_MYRIAD_ERROR : MVNC_OK;
 		if (rc) {
-			LOGE("failed,rc=%d", rc);
 			g->failed = 1;
 		}
 		g->dev->lock.unlock();
@@ -909,6 +908,15 @@ mvncStatus MvNcApi::get_result(
 		rc = MVNC_TIMEOUT;
 		g->failed = 1;
 		lock.unlock();
+		LOGE("time out");
+	}
+
+	if (rc == MVNC_MYRIAD_ERROR) {
+		// get_graph_option内でも排他制御しているのでここでないとだめ
+		char *message = NULL;
+		size_t len;
+		get_graph_option(graph_handle, MVNC_DEBUG_INFO, &message, len);
+		LOGE("myriad err:%s", message);
 	}
 
 	RETURN(rc, mvncStatus);
@@ -997,7 +1005,7 @@ mvncStatus MvNcApi::get_optimisation_list(Device *d) {
 	if (UNLIKELY(!d->optimisation_list)) {
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
-
+	memset(d->optimisation_list, 0, OPTIMISATION_LIST_BUFFER_SIZE);
 	memset(config, 0, sizeof(config));
 	config[0] = 1;
 	config[1] = 1;

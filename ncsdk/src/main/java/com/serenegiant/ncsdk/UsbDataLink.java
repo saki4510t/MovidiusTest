@@ -148,7 +148,8 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 			nativeDisConnect(mNativePtr);
 		}
 	}
-	
+
+	@Override
 	public synchronized void reset()
 		throws IllegalStateException, IllegalArgumentException {
 

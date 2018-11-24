@@ -84,6 +84,12 @@ public class MvNcAPI extends NativeObject {
 		return mDataLinks.size();
 	}
 	
+	public void resetAll() {
+		for (final IDataLink dataLink: mDataLinks) {
+			dataLink.reset();
+		}
+	}
+
 	/**
 	 * なんかを実行
 	 * @param dataPath graphや画像データの存在するパス
@@ -101,7 +107,7 @@ public class MvNcAPI extends NativeObject {
 	@Override
 	protected native long nativeCreate();
 	@Override
-	protected native void nativeDestroy(final long id);
+	protected native void nativeDestroy(final long id_api);
 	
 	private native int nativeAddDataLink(final long id_api, final long id_datalink);
 	private native int nativeRemoveDataLink(final long id_api, final long id_datalink);

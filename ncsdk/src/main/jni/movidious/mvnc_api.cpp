@@ -99,8 +99,8 @@ class Graph {
 	char *aux_buffer;
 	char *debug_buffer;
 	mvnc_float_t *time_taken;
-	void *user_param[2];
 	mvnc_fp16_t *output_data;
+	void *user_param[2];
 
 public:
 	Graph(Device *device)
@@ -133,8 +133,8 @@ public:
 		SAFE_DELETE(aux_buffer);
 		debug_buffer = NULL;
 		SAFE_DELETE(time_taken);
-		user_param[0] = user_param[1] = NULL;
 		SAFE_DELETE(output_data);
+		user_param[0] = user_param[1] = NULL;
 
 		EXIT();
 	}
@@ -148,8 +148,8 @@ public:
 		SAFE_DELETE(aux_buffer);
 		debug_buffer = NULL;
 		SAFE_DELETE(time_taken);
-		user_param[0] = user_param[1] = NULL;
 		SAFE_DELETE(output_data);
+		user_param[0] = user_param[1] = NULL;
 
 		RETURN(0, int);
 	}
@@ -341,6 +341,7 @@ int MvNcApi::run(const char *data_path) {
 	lock.unlock();
 	if (device_num) {
 		const std::string path(data_path);
+		soft_reset();
 		result = run_test(this, path);
 		soft_reset();
 	}

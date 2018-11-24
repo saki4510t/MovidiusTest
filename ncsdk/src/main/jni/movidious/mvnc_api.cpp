@@ -578,6 +578,8 @@ mvncStatus MvNcApi::get_graph_option(
 	case MVNC_DEBUG_INFO:
 		*(char **) data = g->debug_buffer;
 		data_length = DEBUG_BUFFER_SIZE;
+		// 一応nullターミネートしておく
+		g->debug_buffer[DEBUG_BUFFER_SIZE-1] = '\0';
 		break;
 	default:
 		g->dev->lock.unlock();

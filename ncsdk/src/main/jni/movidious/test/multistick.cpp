@@ -315,7 +315,7 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 	if (num_devices == 1) {
 		// 1つしか無い時はシーケンシャルに実行する
 		std::string path = base_path;
-#if 0
+#if 1
 		LOGI("--- NCS 1 inference : GoogleNet ---");
 		if (!LoadGraphToNCS(api, devHandle1,
 			path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
@@ -323,15 +323,17 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 			
 			RETURN(-2, int);
 		}
-		path = base_path;
-		DoInferenceOnImageFile(api, graphHandleGoogleNet,
-			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
-			networkDimGoogleNet, networkMeanGoogleNet);
+		for (int i = 0; i < 2; i++) {
+			path = base_path;
+			DoInferenceOnImageFile(api, graphHandleGoogleNet,
+				path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
+				networkDimGoogleNet, networkMeanGoogleNet);
+			api->soft_reset();
+		}
 		api->deallocate_graph(graphHandleGoogleNet);
-		api->soft_reset();
 #endif
 		// XXX 連続して２種類走らすのはうまくいかない
-#if 1
+#if 0
 		LOGI("--- NCS 1 inference : SqueezeNet ---");
 		path = base_path;
 		if (!LoadGraphToNCS(api, devHandle1,
@@ -340,12 +342,14 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 			
 			RETURN(-2, int);
 		}
-		path = base_path;
-		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
-			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
-			networkDimSqueezeNet, networkMeanSqueezeNet);
+		for (int i = 0; i < 2; i++) {
+			path = base_path;
+			DoInferenceOnImageFile(api, graphHandleSqueezeNet,
+				path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
+				networkDimSqueezeNet, networkMeanSqueezeNet);
+			api->soft_reset();
+		}
 		api->deallocate_graph(graphHandleSqueezeNet);
-		api->soft_reset();
 		LOGI("-----------------------");
 #endif
 	} else if (num_devices >= 2) {

@@ -57,6 +57,7 @@ friend MvNcApi;
 	mvnc_int32_t throttle_happened;
 	char *optimisation_list;
 
+public:
 	Device(UsbDataLink *_data_link);
 	~Device();
 	
@@ -96,6 +97,7 @@ class Graph {
 	mvnc_int32_t config_network_throttle;
 	uint32_t noutputs;
 	uint32_t nstages;
+	size_t aux_buffer_len;
 	char *aux_buffer;
 	char *debug_buffer;
 	mvnc_float_t *time_taken;
@@ -115,6 +117,7 @@ public:
 		config_network_throttle(0),
 		noutputs(0),
 		nstages(0),
+		aux_buffer_len(0),
 		aux_buffer(NULL),
 		debug_buffer(NULL),
 		time_taken(NULL),
@@ -130,9 +133,10 @@ public:
 	~Graph() {
 		ENTER();
 
+		aux_buffer_len = 0;
 		SAFE_DELETE(aux_buffer);
 		debug_buffer = NULL;
-		SAFE_DELETE(time_taken);
+		time_taken = NULL;
 		SAFE_DELETE(output_data);
 		user_param[0] = user_param[1] = NULL;
 
@@ -142,16 +146,20 @@ public:
 	int soft_reset() {
 		ENTER();
 
-		started = have_data = dont_block = input_idx = output_idx = failed = 0;
-		config_iterations = config_network_throttle = 0;
-		noutputs = nstages = 0;
-		SAFE_DELETE(aux_buffer);
-		debug_buffer = NULL;
-		SAFE_DELETE(time_taken);
-		SAFE_DELETE(output_data);
-		user_param[0] = user_param[1] = NULL;
+		int rc = 0;
+		failed = 0;
+		config_iterations = config_network_throttle = 1;
+		memset(aux_buffer, 0, aux_buffer_len);
+	
+		// FIXME エンディアンの変換が必要な気がする
+		rc = dev->set_data("auxBuffer", aux_buffer, aux_buffer_len, 0);
+		if (rc) {
+			LOGE("set_data failed,err=%d", rc);
+			rc = MVNC_ERROR;
+		}
+		memset(output_data, 0, noutputs + sizeof(mvnc_fp16_t));
 
-		RETURN(0, int);
+		RETURN(rc, int);
 	}
 };
 
@@ -188,8 +196,9 @@ int Device::soft_reset() {
 		itr->soft_reset();
 	}
 	
-	thermal_stats = NULL;
-	SAFE_DELETE(optimisation_list);
+	if (optimisation_list) {
+		memset(optimisation_list, 0, OPTIMISATION_LIST_BUFFER_SIZE);
+	}
 	config_backoff_time_normal = 0;
 	config_backoff_time_high = 100;
 	config_backoff_time_critical = 10000;
@@ -410,14 +419,17 @@ mvncStatus MvNcApi::allocate_graph(
 
 	if (!d->graphs.empty()) {
 		lock.unlock();
+		LOGE("graph is already allocated");
 		RETURN(MVNC_BUSY, mvncStatus);
 	}
 
 	myriadStatus_t status;
 	double timeout = time_in_seconds() + 10;
 	do {
-		if (d->get_status(status)) {
+		int rc = d->get_status(status);
+		if (rc) {
 			lock.unlock();
+			LOGE("get status failed,err=%d", rc);
 			RETURN(MVNC_ERROR, mvncStatus);
 		}
 		usleep(10000);
@@ -439,17 +451,17 @@ mvncStatus MvNcApi::allocate_graph(
 	g->noutputs = noutputs;
 
 	// aux_buffer
-	const size_t aux_buffer_len = 224 + nstages * sizeof(*g->time_taken);
-	g->aux_buffer = new char[aux_buffer_len];
+	g->aux_buffer_len = 224 + nstages * sizeof(*g->time_taken);
+	g->aux_buffer = new char[g->aux_buffer_len];
 	if (!g->aux_buffer) {
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
-	memset(g->aux_buffer, 0, aux_buffer_len);
+	memset(g->aux_buffer, 0, g->aux_buffer_len);
 
 	// FIXME エンディアンの変換が必要な気がする
-	if (d->set_data("auxBuffer", g->aux_buffer, aux_buffer_len, 0)) {
+	if (d->set_data("auxBuffer", g->aux_buffer, g->aux_buffer_len, 0)) {
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_ERROR, mvncStatus);
@@ -790,6 +802,7 @@ mvncStatus MvNcApi::load_tensor(
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
 
+	int rc;
 	Graph *g = (Graph *)graph_handle;
 	lock.lock();
 	if (!is_graph_exist(g)) {
@@ -798,8 +811,10 @@ mvncStatus MvNcApi::load_tensor(
 	}
 
 	if (!g->started) {
-		if (send_opt_data(g)) {
+		rc = send_opt_data(g);
+		if (rc) {
 			lock.unlock();
+			LOGE("send_opt_data failed,err %d", rc);
 			RETURN(MVNC_ERROR, mvncStatus);
 		}
 		g->started = 1;
@@ -812,6 +827,7 @@ mvncStatus MvNcApi::load_tensor(
 		}
 		if (g->failed) {
 			lock.unlock();
+			LOGE("unexpectedly failed flag triggered %d", g->failed);
 			RETURN(MVNC_ERROR, mvncStatus);
 		}
 		lock.unlock();
@@ -819,6 +835,7 @@ mvncStatus MvNcApi::load_tensor(
 		lock.lock();
 		if (!is_graph_exist(g)) {
 			lock.unlock();
+			LOGE("Graph is gone");
 			RETURN(MVNC_GONE, mvncStatus);
 		}
 	}
@@ -826,9 +843,12 @@ mvncStatus MvNcApi::load_tensor(
 	lock.unlock();
 
 	// FIXME エンディアンの変換が必要な気がする
-	if (g->dev->set_data(g->input_idx ? "input2" : "input1",
-	     input_tensor, input_tensor_length, g->have_data == 0)) {
+	rc = g->dev->set_data(g->input_idx ? "input2" : "input1",
+		input_tensor, input_tensor_length, g->have_data == 0);
+	
+	if (rc) {
 		lock.unlock();
+		LOGE("set_data failed,err=%d", rc);
 		RETURN(MVNC_ERROR, mvncStatus);
 	}
 
@@ -858,6 +878,7 @@ mvncStatus MvNcApi::get_result(
 	lock.lock();
 	if (!is_graph_exist(g)) {
 		lock.unlock();
+		LOGE("specific graph not found");
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
 	}
 	while (!g->have_data) {
@@ -878,27 +899,35 @@ mvncStatus MvNcApi::get_result(
 	do {
 		g->dev->lock.lock();
 		lock.unlock();
-		if (!g->dev->get_data("output", g->output_data,
-			sizeof(mvnc_fp16_t) * g->noutputs, 0, 0)) {
-
+		int err = g->dev->get_data("output", g->output_data,
+			sizeof(mvnc_fp16_t) * g->noutputs, 0, 0);
+		if (!err) {
 			unsigned int length = DEBUG_BUFFER_SIZE + THERMAL_BUFFER_SIZE +
 				 sizeof(mvnc_int32_t) + sizeof(*g->time_taken) * g->nstages;
 
-			if (g->dev->get_data("auxBuffer", g->aux_buffer,
-				 length, 0, g->have_data == 2)) {
+			err = g->dev->get_data("auxBuffer", g->aux_buffer,
+				 length, 0, g->have_data == 2);
 
+			if (err) {
 				g->failed = 1;
 				g->dev->lock.unlock();
+				LOGE("get_data(auxBuffer) failed,err=%d", err);
 				RETURN(MVNC_ERROR, mvncStatus);
 			}
 			unlock_own = 1;
 			break;
+		} else if (err && (err != USB_ERROR_BUSY)) {
+			g->failed = 1;
+			g->dev->lock.unlock();
+			LOGE("get_data(output) failed,err=%d", err);
+			RETURN(MVNC_ERROR, mvncStatus);
 		}
 		g->dev->lock.unlock();
 		usleep(1000);
 		lock.lock();
 		if (!is_graph_exist(g)) {
 			lock.unlock();
+			LOGE("unexpectedly graph is gone");
 			RETURN(MVNC_GONE, mvncStatus);
 		}
 	} while (time_in_seconds() < timeout);

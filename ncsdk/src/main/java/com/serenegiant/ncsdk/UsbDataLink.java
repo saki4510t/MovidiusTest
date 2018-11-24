@@ -103,7 +103,8 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 	}
 
 	public synchronized boolean isBooted() {
-		return (mCtrlBlock != null) && (mCtrlBlock.getProductId() == PID_MOVIDIUS_USB_BOOT);
+		return (mCtrlBlock != null)
+			&& (mCtrlBlock.getProductId() == PID_MOVIDIUS_USB_BOOT);
 	}
 
 	public synchronized void open(
@@ -128,7 +129,7 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 					}
 				}
 				if (found) {
-					// FIXME Neural Compute Stick2だとnacsdk2.xにしないとだめかも
+					// FIXME Neural Compute Stick2だとncsdk2.xにしないとだめかも
 					usbBoot(mCtrlBlock, R.raw.mvncapi);
 					result = 0;
 				}
@@ -158,7 +159,7 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 		final InputStream in = new BufferedInputStream(
 			context.getResources().openRawResource(mvcmd));
 		// mvcmdファイルのサイズが不明なのでとりあえずByteArrayOutputStreamへ
-		// 書き込んでbyte配列に変える
+		// 書き込んでbyte配列に変える FIXME maxPacketSize毎に読み込んで送ればいい気がする
 		final byte[] buf = new byte[4096];
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
@@ -214,7 +215,9 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 	}
 
 	@Nullable
-	private UsbEndpoint findOutEndpoint(@NonNull final USBMonitor.UsbControlBlock ctrlBlock) {
+	private UsbEndpoint findOutEndpoint(
+		@NonNull final USBMonitor.UsbControlBlock ctrlBlock) {
+
 		if (DEBUG) Log.v(TAG, "findOutEndpoint:");
 		UsbEndpoint result = null;
 		final UsbDevice device = ctrlBlock.getDevice();

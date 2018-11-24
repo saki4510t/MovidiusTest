@@ -426,16 +426,17 @@ mvncStatus MvNcApi::allocate_graph(
 	g->noutputs = noutputs;
 
 	// aux_buffer
-	g->aux_buffer = new char[224 + nstages * sizeof(*g->time_taken)];
+	const size_t aux_buffer_len = 224 + nstages * sizeof(*g->time_taken);
+	g->aux_buffer = new char[aux_buffer_len];
 	if (!g->aux_buffer) {
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);
 	}
+	memset(g->aux_buffer, 0, aux_buffer_len);
 
 	// FIXME エンディアンの変換が必要な気がする
-	if (d->set_data("auxBuffer", g->aux_buffer,
-			    224 + nstages * sizeof(*g->time_taken), 0)) {
+	if (d->set_data("auxBuffer", g->aux_buffer, aux_buffer_len, 0)) {
 		free(g->aux_buffer);
 		SAFE_DELETE(g);
 		lock.unlock();

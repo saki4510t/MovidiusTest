@@ -856,6 +856,7 @@ mvncStatus MvNcApi::get_result(
 	if (unlock_own) {
 		rc = *g->debug_buffer ? MVNC_MYRIAD_ERROR : MVNC_OK;
 		if (rc) {
+			LOGE("failed,rc=%d", rc);
 			g->failed = 1;
 		}
 		g->dev->lock.unlock();

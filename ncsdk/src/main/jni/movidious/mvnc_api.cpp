@@ -441,7 +441,7 @@ mvncStatus MvNcApi::deallocate_graph(void *graph_handle) {
 	struct Device *d = g->dev;
 
 	d->lock.lock();
-	if (deallocate_graph(g)) {
+	if (internal_deallocate_graph(g)) {
 		d->lock.unlock();
 		lock.unlock();
 		RETURN(MVNC_INVALID_PARAMETERS, mvncStatus);
@@ -920,7 +920,7 @@ bool MvNcApi::is_graph_exist(const Graph *graph) {
  */
 /*private*/
 // Defined here as it will be used twice
-int MvNcApi::deallocate_graph(Graph *graph) {
+int MvNcApi::internal_deallocate_graph(Graph *graph) {
 	ENTER();
 
 	if (UNLIKELY(!graph)) {

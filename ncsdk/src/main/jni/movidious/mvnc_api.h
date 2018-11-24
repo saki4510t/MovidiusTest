@@ -31,7 +31,7 @@ private:
 	bool is_device_exist(const Device *device);
 	bool is_graph_exist(const Graph *graph);
 
-	int deallocate_graph(Graph *graph);
+	int internal_deallocate_graph(Graph *graph);
 	mvncStatus get_optimisation_list(Device *d);
 	mvncStatus send_opt_data(const Graph *g);
 protected:

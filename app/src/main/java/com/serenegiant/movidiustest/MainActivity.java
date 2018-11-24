@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.serenegiant.dialog.MessageDialogFragmentV4;
@@ -354,33 +353,56 @@ public class MainActivity extends AppCompatActivity
 //================================================================================
 	private void initView() {
 		// Example of a call to a native method
-		final Button button = findViewById(R.id.button);
-		button.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(final View v) {
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						Log.i(TAG, "start");
-						final File dir = new File(
-							Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-							"MovidiusTest");
-						String dataPath = dir.getAbsolutePath();
-						if (!dataPath.endsWith("/")) {
-							dataPath = dataPath + "/";
-						}
-						if (DEBUG) Log.v(TAG, "dataPath=" + dataPath);
-						try {
-							mMvNcAPI.run(dataPath);
-						} catch (final Exception e) {
-							Log.w(TAG, e);
-						}
-						Log.i(TAG, "finished!");
-					}
-				}, TAG).start();
-			}
-		});
+		Button button = findViewById(R.id.compute_button);
+		button.setOnClickListener(mOnClickListener);
+		button = findViewById(R.id.reset_button);
+		button.setOnClickListener(mOnClickListener);
+
 		mRootView = findViewById(R.id.activity);
+	}
+
+	private final View.OnClickListener mOnClickListener
+		= new View.OnClickListener() {
+		@Override
+		public void onClick(final View v) {
+			switch (v.getId()) {
+			case R.id.compute_button:
+				compute();
+				break;
+			case R.id.reset_button:
+				reset();
+				break;
+			default:
+				break;
+			}
+		}
+	};
+
+	private void compute() {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Log.i(TAG, "start");
+				final File dir = new File(
+					Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+					"MovidiusTest");
+				String dataPath = dir.getAbsolutePath();
+				if (!dataPath.endsWith("/")) {
+					dataPath = dataPath + "/";
+				}
+				if (DEBUG) Log.v(TAG, "dataPath=" + dataPath);
+				try {
+					mMvNcAPI.run(dataPath);
+				} catch (final Exception e) {
+					Log.w(TAG, e);
+				}
+				Log.i(TAG, "finished!");
+			}
+		}, TAG).start();
+	}
+
+	private void reset() {
+		mMvNcAPI.resetAll();
 	}
 
 	private void close(@NonNull final IDataLink dataLink) {

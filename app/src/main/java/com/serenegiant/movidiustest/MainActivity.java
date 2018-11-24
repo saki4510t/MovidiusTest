@@ -7,7 +7,6 @@ import android.hardware.usb.UsbDevice;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -33,6 +32,9 @@ import com.serenegiant.uvc.ICameraDialogListener;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity
 	implements ICameraDialogListener, MessageDialogFragmentV4.MessageDialogListener {
@@ -47,6 +49,19 @@ public class MainActivity extends AppCompatActivity
 	private static final int CAMERA_ACTIVE = 3;
 	private static final int CAMERA_PREVIEWING = 4;
 
+	private static final int CORE_POOL_SIZE = 1;		// initial/minimum threads
+	private static final int MAX_POOL_SIZE = 4;			// maximum threads
+	private static final int KEEP_ALIVE_TIME = 10;		// time periods while keep the idle thread
+
+	/** ThreadPoolExecutor */
+	public static final ThreadPoolExecutor EXECUTOR
+		= new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_TIME,
+			TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+
+	static {
+		EXECUTOR.allowCoreThreadTimeOut(true);	// this makes core threads can terminate
+	}
+	
 	/**
 	 * 非同期で実行するためのHandler(UIスレッドじゃないよ)
 	 */
@@ -381,26 +396,23 @@ public class MainActivity extends AppCompatActivity
 	};
 
 	private void compute() {
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				Log.i(TAG, "start");
-				final File dir = new File(
-					Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-					"MovidiusTest");
-				String dataPath = dir.getAbsolutePath();
-				if (!dataPath.endsWith("/")) {
-					dataPath = dataPath + "/";
-				}
-				if (DEBUG) Log.v(TAG, "dataPath=" + dataPath);
-				try {
-					mMvNcAPI.run(dataPath);
-				} catch (final Exception e) {
-					Log.w(TAG, e);
-				}
-				Log.i(TAG, "finished!");
+		EXECUTOR.execute(() -> {
+			Log.i(TAG, "start");
+			final File dir = new File(
+				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+				"MovidiusTest");
+			String dataPath = dir.getAbsolutePath();
+			if (!dataPath.endsWith("/")) {
+				dataPath = dataPath + "/";
 			}
-		}, TAG).start();
+			if (DEBUG) Log.v(TAG, "dataPath=" + dataPath);
+			try {
+				mMvNcAPI.run(dataPath);
+			} catch (final Exception e) {
+				Log.w(TAG, e);
+			}
+			Log.i(TAG, "finished!");
+		});
 	}
 
 	private void reset() {

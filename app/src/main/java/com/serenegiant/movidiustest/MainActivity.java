@@ -7,6 +7,7 @@ import android.hardware.usb.UsbDevice;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity
 		}
 		if (mAsyncHandler != null) {
 			try {
+				mAsyncHandler.removeCallbacksAndMessages(null);
 				mAsyncHandler.getLooper().quit();
 			} catch (final Exception e) {
 				// ignore
@@ -410,9 +412,8 @@ public class MainActivity extends AppCompatActivity
 		mMvNcAPI.remove(dataLink);
 		dataLink.release();
 		if (mMvNcAPI.getNumDataLinks() == 0) {
-			runOnUiThread(() -> {
-				finish();
-			});
+			mUIHandler.removeCallbacksAndMessages(null);
+			finishApp();
 		}
 	}
 
@@ -436,13 +437,25 @@ public class MainActivity extends AppCompatActivity
 					});
 				}, 0);
 			} else {
-				runOnUiThread(() -> {
-					finish();
-				});
+				finishApp();
 			}
 		}
 	}
 
+	private void finishApp() {
+		removeFromUiThread(mFinishAppTask);
+		runOnUiThread(mFinishAppTask, 200);
+	}
+
+	private final Runnable mFinishAppTask = new Runnable() {
+		@Override
+		public void run() {
+			if ((mMvNcAPI == null) || (mMvNcAPI.getNumDataLinks() == 0)) {
+				finish();
+			}
+		}
+	};
+	
 	/**
 	 * Movidiusの選択要求
 	 * @param requestPermission

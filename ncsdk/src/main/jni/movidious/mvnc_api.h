@@ -34,7 +34,6 @@ private:
 	int internal_deallocate_graph(Graph *graph);
 	mvncStatus get_optimisation_list(Device *d);
 	mvncStatus send_opt_data(const Graph *g);
-	int soft_reset();
 protected:
 public:
 	MvNcApi();
@@ -45,6 +44,7 @@ public:
 	const size_t get_device_nums();
 	void *get_device(const size_t &ix);
 	int run(const char *data_path);
+	int soft_reset();
 	
 	mvncStatus allocate_graph(
 		const void *device_handle, void **graph_handle,

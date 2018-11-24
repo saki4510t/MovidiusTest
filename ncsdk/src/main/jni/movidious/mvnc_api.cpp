@@ -348,6 +348,18 @@ int MvNcApi::run(const char *data_path) {
 	RETURN(result, int);
 }
 
+/*public*/
+int MvNcApi::soft_reset() {
+	ENTER();
+
+	Mutex::Autolock auto_lock(lock);
+
+	for (auto itr: devices) {
+		itr->soft_reset();
+	}
+	RETURN(0, int);
+}
+
 //======================================================================
 mvncStatus MvNcApi::allocate_graph(
 	const void *device_handle, void **graph_handle,
@@ -1073,17 +1085,6 @@ mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 	}
 
 	RETURN(MVNC_OK, mvncStatus);
-}
-
-int MvNcApi::soft_reset() {
-	ENTER();
-
-	Mutex::Autolock auto_lock(lock);
-
-	for (auto itr: devices) {
-		itr->soft_reset();
-	}
-	RETURN(0, int);
 }
 
 }	// namespace ncs

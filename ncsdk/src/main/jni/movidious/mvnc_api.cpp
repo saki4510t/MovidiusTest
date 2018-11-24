@@ -437,7 +437,6 @@ mvncStatus MvNcApi::allocate_graph(
 
 	// FIXME エンディアンの変換が必要な気がする
 	if (d->set_data("auxBuffer", g->aux_buffer, aux_buffer_len, 0)) {
-		free(g->aux_buffer);
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_ERROR, mvncStatus);
@@ -450,7 +449,6 @@ mvncStatus MvNcApi::allocate_graph(
 	// output_data
 	g->output_data = new mvnc_fp16_t[noutputs];
 	if (!g->output_data) {
-		free(g->aux_buffer);
 		SAFE_DELETE(g);
 		lock.unlock();
 		RETURN(MVNC_OUT_OF_MEMORY, mvncStatus);

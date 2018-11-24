@@ -131,7 +131,7 @@ public:
 		ENTER();
 
 		SAFE_DELETE(aux_buffer);
-		SAFE_DELETE(debug_buffer);
+		debug_buffer = NULL;
 		SAFE_DELETE(time_taken);
 		user_param[0] = user_param[1] = NULL;
 		SAFE_DELETE(output_data);
@@ -146,7 +146,7 @@ public:
 		config_iterations = config_network_throttle = 0;
 		noutputs = nstages = 0;
 		SAFE_DELETE(aux_buffer);
-		SAFE_DELETE(debug_buffer);
+		debug_buffer = NULL;
 		SAFE_DELETE(time_taken);
 		user_param[0] = user_param[1] = NULL;
 		SAFE_DELETE(output_data);

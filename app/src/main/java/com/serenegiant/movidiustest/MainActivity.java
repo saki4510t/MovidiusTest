@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onDestroy() {
 		if (DEBUG) Log.v(TAG, "onDestroy:");
-		close();
+		close(false);
 		if (mMvNcAPI != null) {
 			mMvNcAPI.release();
 			mMvNcAPI = null;
@@ -424,12 +424,11 @@ public class MainActivity extends AppCompatActivity
 		mMvNcAPI.remove(dataLink);
 		dataLink.release();
 		if (mMvNcAPI.getNumDataLinks() == 0) {
-			mUIHandler.removeCallbacksAndMessages(null);
 			finishApp();
 		}
 	}
 
-	private void close() {
+	private void close(final boolean canFinish) {
 		if (DEBUG) Log.v(TAG, "close:");
 		synchronized (mSync) {
 			final List<IDataLink> list = mMvNcAPI.getDatalinkAll();
@@ -444,11 +443,13 @@ public class MainActivity extends AppCompatActivity
 						}
 						dataLink.release();
 					}
-					runOnUiThread(() -> {
-						finish();
-					});
+					if (canFinish) {
+						runOnUiThread(() -> {
+							finish();
+						});
+					}
 				}, 0);
-			} else {
+			} else if (canFinish) {
 				finishApp();
 			}
 		}

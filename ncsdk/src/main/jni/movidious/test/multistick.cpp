@@ -14,14 +14,14 @@
 // limitations under the License.
 
 #if 0    // set 0 is you need debug log, otherwise set 1
-	#ifndef LOG_NDEBUG
-	#define	LOG_NDEBUG
-	#endif
-	#undef USE_LOGALL
+#ifndef LOG_NDEBUG
+#define	LOG_NDEBUG
+#endif
+#undef USE_LOGALL
 #else
-	#define USE_LOGALL
-	#undef LOG_NDEBUG
-	#undef NDEBUG
+#define USE_LOGALL
+#undef LOG_NDEBUG
+#undef NDEBUG
 #endif
 
 #include <stdio.h>
@@ -133,7 +133,7 @@ void *LoadGraphFile(const char *path, size_t &length) {
 //         will contain reqSize*reqSize*3 half floats.
 mvnc_fp16_t *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 	ENTER();
-
+	
 	int width, height, cp, i;
 	unsigned char *img, *imgresized;
 	float *imgfp32;
@@ -183,7 +183,7 @@ mvnc_fp16_t *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 	}
 	floattofp16(imgfp16, imgfp32, 3 * reqSize * reqSize);
 	free(imgfp32);
-
+	
 	RET(imgfp16);
 }
 
@@ -194,7 +194,8 @@ mvnc_fp16_t *LoadImage(const char *path, unsigned int reqSize, float *mean) {
 // Param graphHandle is the address of the graph handle that will be created internally.
 //                   the caller must call mvncDeallocateGraph when done with the handle.
 // Returns true if works or false if doesn't.
-bool LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename, void **graphHandle) {
+bool
+LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename, void **graphHandle) {
 	mvncStatus retCode;
 	
 	// Read in a graph file
@@ -232,9 +233,9 @@ bool LoadGraphToNCS(MvNcApi *api, void *deviceHandle, const char *graphFilename,
 bool DoInferenceOnImageFile(MvNcApi *api, void *graphHandle,
   const char *imageFileName, unsigned int networkDim, float *networkMean) {
 	mvncStatus retCode;
-
+	
 	ENTER();
-
+	
 	// LoadImage will read image from disk, convert channels to floats
 	// subtract network mean for each value in each channel.  Then, convert
 	// floats to half precision floats and return pointer to the buffer
@@ -308,57 +309,85 @@ int run_test(MvNcApi *api, const std::string &base_path) {
 		RETURN(-1, int);
 	}
 	
-	LOGD("number of connected device(s) %" FMT_SIZE_T, api->get_device_nums());
-
-	if (devHandle1) {
+	const size_t num_devices = api->get_device_nums();
+	LOGD("number of connected device(s) %" FMT_SIZE_T, num_devices);
+	
+	if (num_devices == 1) {
+		// 1つしか無い時はシーケンシャルに実行する
 		std::string path = base_path;
+#if 0
+		LOGI("--- NCS 1 inference : GoogleNet ---");
 		if (!LoadGraphToNCS(api, devHandle1,
-		  path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
-		  &graphHandleGoogleNet)) {
-
+			path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleGoogleNet)) {
+			
 			RETURN(-2, int);
 		}
-	}
-	if (devHandle2) {
+		path = base_path;
+		DoInferenceOnImageFile(api, graphHandleGoogleNet,
+			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
+			networkDimGoogleNet, networkMeanGoogleNet);
+		api->deallocate_graph(graphHandleGoogleNet);
+		api->soft_reset();
+#endif
+		// XXX 連続して２種類走らすのはうまくいかない
+#if 1
+		LOGI("--- NCS 1 inference : SqueezeNet ---");
+		path = base_path;
+		if (!LoadGraphToNCS(api, devHandle1,
+			path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleSqueezeNet)) {
+			
+			RETURN(-2, int);
+		}
+		path = base_path;
+		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
+			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
+			networkDimSqueezeNet, networkMeanSqueezeNet);
+		api->deallocate_graph(graphHandleSqueezeNet);
+		api->soft_reset();
+		LOGI("-----------------------");
+#endif
+	} else if (num_devices >= 2) {
+		// 2つある時は別々のNeural Compute Stick上で実行する
+		LOGI("--- NCS 1 inference : GoogleNet ---");
 		std::string path = base_path;
+		if (!LoadGraphToNCS(api, devHandle1,
+			path.append(GOOGLENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleGoogleNet)) {
+			
+			RETURN(-2, int);
+		}
+		
+		LOGI("--- NCS 2 inference : SqueezeNet ---");
+		path = base_path;
 		if (!LoadGraphToNCS(api, devHandle2,
-		  path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
-		  &graphHandleSqueezeNet)) {
+			path.append(SQUEEZENET_GRAPH_FILE_NAME).c_str(),
+			&graphHandleSqueezeNet)) {
 			
 			if (graphHandleGoogleNet) {
 				api->deallocate_graph(graphHandleGoogleNet);
 			}
 			graphHandleGoogleNet = NULL;
-
+			
 			RETURN(-2, int);
 		}
-	}
-	
-	if (devHandle1) {
-		std::string path = base_path;
-		LOGI("--- NCS 1 inference ---");
+		
+		LOGI("--- NCS 1 inference:GoogleNet ---");
+		path = base_path;
 		DoInferenceOnImageFile(api, graphHandleGoogleNet,
 			path.append(GOOGLENET_IMAGE_FILE_NAME).c_str(),
 			networkDimGoogleNet, networkMeanGoogleNet);
-		LOGI("-----------------------");
-	}
-	
-	if (devHandle2) {
-		std::string path = base_path;
-		LOGI("--- NCS 2 inference ---");
+		
+		LOGI("--- NCS 2 inference:SqueezeNet ---");
+		path = base_path;
 		DoInferenceOnImageFile(api, graphHandleSqueezeNet,
 			path.append(SQUEEZENET_IMAGE_FILE_NAME).c_str(),
 			networkDimSqueezeNet, networkMeanSqueezeNet);
 		LOGI("-----------------------");
-	}
-	
-	if (graphHandleSqueezeNet) {
+
 		api->deallocate_graph(graphHandleSqueezeNet);
-		graphHandleSqueezeNet = NULL;
-	}
-	if (graphHandleGoogleNet) {
 		api->deallocate_graph(graphHandleGoogleNet);
-		graphHandleGoogleNet = NULL;
 	}
 	
 	RETURN(0, int);

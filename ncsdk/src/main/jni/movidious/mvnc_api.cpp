@@ -191,7 +191,6 @@ int Device::remove(Graph *graph) {
 }
 
 static double time_in_seconds() {
-	ENTER();
 
 	static double s;
 	struct timespec ts;
@@ -201,7 +200,7 @@ static double time_in_seconds() {
 		s = ts.tv_sec + ts.tv_nsec * 1e-9;
 	}
 
-	RETURN(ts.tv_sec + ts.tv_nsec * 1e-9 - s, double);
+	return ts.tv_sec + ts.tv_nsec * 1e-9 - s;
 }
 
 static uint32_t read_32bits(const uint8_t *ptr) {
@@ -889,7 +888,7 @@ bool MvNcApi::is_device_exist(const Device *device) {
 
 	for (auto dev: devices) {
 		if (dev == device) {
-			return true;
+			RETURN(true, bool);
 		}
 	}
 
@@ -903,7 +902,7 @@ bool MvNcApi::is_device_exist(const Device *device) {
  */
 /*private*/
 bool MvNcApi::is_graph_exist(const Graph *graph) {
-	ENTER();
+//	ENTER();
 
 	for (auto dev: devices) {
 		for (auto g: dev->graphs) {
@@ -913,7 +912,7 @@ bool MvNcApi::is_graph_exist(const Graph *graph) {
 		}
 	}
 
-	RETURN(false, bool);
+	return false; // RETURN(false, bool);
 }
 
 /**

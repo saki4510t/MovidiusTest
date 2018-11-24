@@ -78,6 +78,7 @@ friend MvNcApi;
 		return data_link->get_data(name,
 			data, length, offset, host_ready);
 	};
+	int soft_reset();
 };
 
 class Graph {
@@ -138,6 +139,20 @@ public:
 		EXIT();
 	}
 
+	int soft_reset() {
+		ENTER();
+
+		started = have_data = dont_block = input_idx = output_idx = failed = 0;
+		config_iterations = config_network_throttle = 0;
+		noutputs = nstages = 0;
+		SAFE_DELETE(aux_buffer);
+		SAFE_DELETE(debug_buffer);
+		SAFE_DELETE(time_taken);
+		user_param[0] = user_param[1] = NULL;
+		SAFE_DELETE(output_data);
+
+		RETURN(0, int);
+	}
 };
 
 Device::Device(UsbDataLink *_data_link)
@@ -164,6 +179,25 @@ Device::~Device() {
 	SAFE_DELETE(optimisation_list);
 
 	EXIT();
+}
+
+int Device::soft_reset() {
+	ENTER();
+
+	for (auto itr: graphs) {
+		itr->soft_reset();
+	}
+	
+	thermal_stats = NULL;
+	SAFE_DELETE(optimisation_list);
+	config_backoff_time_normal = 0;
+	config_backoff_time_high = 100;
+	config_backoff_time_critical = 10000;
+	config_temperature_debug = throttle_happened = 0;
+	config_temp_lim_upper = 95;
+	config_temp_lim_lower = 85;
+
+	RETURN(0, int);
 }
 
 /**
@@ -306,7 +340,7 @@ int MvNcApi::run(const char *data_path) {
 	}
 	lock.unlock();
 	if (device_num) {
-	const std::string path(data_path);
+		const std::string path(data_path);
 		result = run_test(this, path);
 		soft_reset();
 	}
@@ -1030,6 +1064,17 @@ mvncStatus MvNcApi::send_opt_data(const Graph *g) {
 	}
 
 	RETURN(MVNC_OK, mvncStatus);
+}
+
+int MvNcApi::soft_reset() {
+	ENTER();
+
+	Mutex::Autolock auto_lock(lock);
+
+	for (auto itr: devices) {
+		itr->soft_reset();
+	}
+	RETURN(0, int);
 }
 
 }	// namespace ncs

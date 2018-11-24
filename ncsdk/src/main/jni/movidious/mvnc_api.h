@@ -34,6 +34,7 @@ private:
 	int internal_deallocate_graph(Graph *graph);
 	mvncStatus get_optimisation_list(Device *d);
 	mvncStatus send_opt_data(const Graph *g);
+	int soft_reset();
 protected:
 public:
 	MvNcApi();

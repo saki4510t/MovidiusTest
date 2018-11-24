@@ -298,8 +298,18 @@ void *MvNcApi::get_device(const size_t &ix) {
 int MvNcApi::run(const char *data_path) {
 	ENTER();
 
+	int result = MVNC_DEVICE_NOT_FOUND;
+	size_t device_num;
+	lock.lock();
+	{
+		device_num = devices.size();
+	}
+	lock.unlock();
+	if (device_num) {
 	const std::string path(data_path);
-	int result = run_test(this, path);
+		result = run_test(this, path);
+		soft_reset();
+	}
 
 	RETURN(result, int);
 }

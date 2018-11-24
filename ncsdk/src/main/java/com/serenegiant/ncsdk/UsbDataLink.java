@@ -149,6 +149,19 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 		}
 	}
 	
+	public synchronized void reset()
+		throws IllegalStateException, IllegalArgumentException {
+
+		if (mNativePtr != 0) {
+			final int result = nativeReset(mNativePtr);
+			if (result != 0) {
+				throw new IllegalArgumentException("nativeReset returned with err " + result);
+			}
+		} else {
+			throw new IllegalStateException("already released?");
+		}
+	}
+
 	private void usbBoot(@NonNull final USBMonitor.UsbControlBlock ctrlBlock,
 		@RawRes final int mvcmd)
 			throws IllegalStateException, IllegalArgumentException {
@@ -250,8 +263,9 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 	@Override
 	protected native long nativeCreate();
 	@Override
-	protected native void nativeDestroy(long id_ncs);
+	protected native void nativeDestroy(final long id_ncs);
 
 	private native int nativeConnect(final long id_ncs, final int fd);
-	private native int nativeDisConnect(long id_ncs);
+	private native int nativeDisConnect(final long id_ncs);
+	private native int nativeReset(final long id_ncs);
 }

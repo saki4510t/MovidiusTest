@@ -103,6 +103,21 @@ static jint nativeDisconnect(JNIEnv *env, jobject thiz,
 	RETURN(result, jint);
 }
 
+// データリンクをリセット
+static jint nativeReset(JNIEnv *env, jobject thiz,
+	ID_TYPE id_datalink) {
+
+	ENTER();
+
+	int result = JNI_ERR;
+	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	if (LIKELY(datalink)) {
+		result = datalink->reset();
+	}
+
+	RETURN(result, jint);
+}
+
 //**********************************************************************
 //
 //**********************************************************************
@@ -112,6 +127,7 @@ static JNINativeMethod methods[] = {
 	{ "nativeDestroy",		"(J)V", (void *) nativeDestroy },
 	{ "nativeConnect",		"(JI)I", (void *) nativeConnect },
 	{ "nativeDisConnect",	"(J)I", (void *) nativeDisconnect },
+	{ "nativeReset",		"(J)I", (void *) nativeReset },
 };
 
 int register_ncs_movidius(JNIEnv *env) {

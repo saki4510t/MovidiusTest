@@ -49,16 +49,16 @@ typedef enum {
 	protocols
 } protocol_t;
 
-int XLinkWrite(void *fd, void *data, int size, unsigned int timeout);
-int XLinkRead(void *fd, void *data, int size, unsigned int timeout);
+int XLinkWrite(void *fd, const void *data, const size_t &size, const unsigned int &timeout);
+int XLinkRead(void *fd, void *data, const size_t &size, const unsigned int &timeout);
 int XLinkPlatformConnect(const char *devPathRead,
   const char *devPathWrite, void **fd);
-int XLinkPlatformInit(protocol_t protocol, int loglevel);
+int XLinkPlatformInit(const protocol_t &protocol, const int &loglevel);
 
-int XLinkPlatformGetDeviceName(int index,
+int XLinkPlatformGetDeviceName(const int &index,
   char *name,
   size_t &nameSize);
-int XLinkPlatformGetDeviceNameExtended(int index,
+int XLinkPlatformGetDeviceNameExtended(const int &index,
   char *name,
   size_t &nameSize,
   int pid);

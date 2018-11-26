@@ -91,8 +91,8 @@ static double seconds() {
 ################################## USB CDC FUNCTIONS ##############################
 ##################################################################################*/
 static int cdc_usb_write(void *f __attribute__((unused)),
-  void *data, size_t size,
-  unsigned int timeout __attribute__((unused))) {
+  const void *data, const size_t &size,
+  const unsigned int &timeout __attribute__((unused))) {
 #if (!defined(_WIN32) && !defined(_WIN64))
 	size_t byteCount = 0;
 	if (usbFdWrite < 0) {
@@ -126,8 +126,8 @@ static int cdc_usb_write(void *f __attribute__((unused)),
 }
 
 static int cdc_usb_read(void *f __attribute__((unused)),
-  void *data, size_t size,
-  unsigned int timeout __attribute__((unused))) {
+  void *data, const size_t &size,
+  const unsigned int &timeout __attribute__((unused))) {
 #if (!defined(_WIN32) && !defined(_WIN64))
 	if (usbFdRead < 0) {
 		return -1;
@@ -233,9 +233,10 @@ static int cdc_usb_close(void *f __attribute__((unused))) {
 /*#################################################################################
 ################################## USB VSC FUNCTIONS ##############################
 ##################################################################################*/
-static int vsc_usb_write(void *f, void *data, size_t size, unsigned int timeout) {
-	while (size > 0) {
-		int bt, ss = size;
+static int vsc_usb_write(void *f, const void *data, const size_t &size, const unsigned int &timeout) {
+	size_t sz = size;
+	while (sz > 0) {
+		int bt, ss = sz;
 		if (ss > 1024 * 1024 * 10)
 			ss = 1024 * 1024 * 10;
 #if (defined(_WIN32) || defined(_WIN64))
@@ -255,14 +256,16 @@ static int vsc_usb_write(void *f, void *data, size_t size, unsigned int timeout)
 			return rc;
 		}
 		data = (char *) data + bt;
-		size -= bt;
+		sz -= bt;
 	}
 	return 0;
 }
 
-static int vsc_usb_read(void *f, void *data, size_t size, unsigned int timeout) {
-	while (size > 0) {
-		int bt, ss = size;
+static int vsc_usb_read(void *f, void *data, const size_t &size, const unsigned int &timeout) {
+	size_t sz = size;
+	while (sz > 0) {
+		int bt;
+		size_t ss = sz;
 		if (ss > 1024 * 1024 * 10)
 			ss = 1024 * 1024 * 10;
 #if (defined(_WIN32) || defined(_WIN64))
@@ -282,7 +285,7 @@ static int vsc_usb_read(void *f, void *data, size_t size, unsigned int timeout) 
 			return rc;
 		}
 		data = ((char *) data) + bt;
-		size -= bt;
+		sz -= bt;
 	}
 	return 0;
 }
@@ -363,14 +366,14 @@ static int vsc_usb_close(void *f) {
 ################################### PCIe FUNCTIONS ################################
 ##################################################################################*/
 static int pcie_host_write(void *f __attribute__((unused)),
-  void *data, size_t size,
-  unsigned int timeout __attribute__((unused))) {
+  const void *data, const size_t &size,
+  const unsigned int &timeout __attribute__((unused))) {
 	return write(pcieFd, ((char *) data), size);
 }
 
 static int pcie_host_read(void *f __attribute__((unused)),
-  void *data, size_t size,
-  unsigned int timeout __attribute__((unused))) {
+  void *data, const size_t &size,
+  const unsigned int &timeout __attribute__((unused))) {
 	return read(pcieFd, ((char *) data), size);
 }
 
@@ -395,10 +398,10 @@ static int pcie_host_close(void *f __attribute__((unused))) {
 /*These arrays hold the write/read/open/close operation functions
 specific for each communication protocol.
 Add more functions if adding another protocol*/
-int (*write_fcts[protocols])(void *, void *, size_t, unsigned int) = \
+int (*write_fcts[protocols])(void *, const void *, const size_t &, const unsigned int &) = \
                             {vsc_usb_write, cdc_usb_write, pcie_host_write};
 
-int (*read_fcts[protocols])(void *, void *, size_t, unsigned int) = \
+int (*read_fcts[protocols])(void *, void *, const size_t &, const unsigned int &) = \
                             {vsc_usb_read, cdc_usb_read, pcie_host_read};
 
 int (*open_fcts[protocols])(const char *, const char *, void **) = \
@@ -416,11 +419,11 @@ int XLinkPlatformConnect(const char *devPathRead, const char *devPathWrite, void
 	return open_fcts[gl_protocol](devPathRead, devPathWrite, fd);
 }
 
-int XLinkWrite(void *fd, void *data, int size, unsigned int timeout) {
+int XLinkWrite(void *fd, const void *data, const size_t &size, const unsigned int &timeout) {
 	return write_fcts[gl_protocol](fd, data, size, timeout);
 }
 
-int XLinkRead(void *fd, void *data, int size, unsigned int timeout) {
+int XLinkRead(void *fd, void *data, const size_t &size, const unsigned int &timeout) {
 	return read_fcts[gl_protocol](fd, data, size, timeout);
 }
 
@@ -428,7 +431,7 @@ int XLinkPlatformResetRemote(void *fd) {
 	return close_fcts[gl_protocol](fd);
 }
 
-int XLinkPlatformInit(protocol_t protocol, int loglevel) {
+int XLinkPlatformInit(const protocol_t &protocol, const int &loglevel) {
 	gl_protocol = protocol;
 	usb_loglevel = loglevel;
 #if (defined(_WIN32) || defined(_WIN64))
@@ -438,7 +441,7 @@ int XLinkPlatformInit(protocol_t protocol, int loglevel) {
 }
 
 
-int getDeviceName(int index, char *name, size_t &nameSize, int pid) {
+int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid) {
 	switch (gl_protocol) {
 	
 	case Pcie:
@@ -468,11 +471,11 @@ int getDeviceName(int index, char *name, size_t &nameSize, int pid) {
 	return X_LINK_PLATFORM_SUCCESS;
 }
 
-int XLinkPlatformGetDeviceName(int index, char *name, size_t &nameSize) {
+int XLinkPlatformGetDeviceName(const int &index, char *name, size_t &nameSize) {
 	return getDeviceName(index, name, nameSize, 0);
 }
 
-int XLinkPlatformGetDeviceNameExtended(int index, char *name, size_t &nameSize, int pid) {
+int XLinkPlatformGetDeviceNameExtended(const int &index, char *name, size_t &nameSize, int pid) {
 	return getDeviceName(index, name, nameSize, pid);
 }
 

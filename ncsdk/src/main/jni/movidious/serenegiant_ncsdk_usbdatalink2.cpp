@@ -25,8 +25,8 @@
 #include "core/interface.h"
 #include "core/transfer.h"
 // ncs
-#include "serenegiant_ncsdk_usbdatalink.h"
-#include "usb_data_link.h"
+#include "serenegiant_ncsdk_usbdatalink2.h"
+#include "usb_data_link2.h"
 
 namespace serenegiant {
 namespace usb {
@@ -49,7 +49,7 @@ static ID_TYPE nativeCreate(JNIEnv *env, jobject thiz) {
 
 	jobject obj = env->NewGlobalRef(thiz);
 	//
-	UsbDataLink *datalink = new UsbDataLink(obj);
+	UsbDataLink2 *datalink = new UsbDataLink2(obj);
 	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(datalink));
 	LOGD("datalink=%p", datalink);
 
@@ -63,7 +63,7 @@ static void nativeDestroy(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	setField_long(env, thiz, "mNativePtr", 0);
-	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	UsbDataLink2 *datalink = reinterpret_cast<UsbDataLink2 *>(id_datalink);
 	if (LIKELY(datalink)) {
 		datalink->release(env);
 		SAFE_DELETE(datalink);
@@ -79,7 +79,7 @@ static jint nativeConnect(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	int result = JNI_ERR;
-	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	UsbDataLink2 *datalink = reinterpret_cast<UsbDataLink2 *>(id_datalink);
 	if (LIKELY(datalink && (fd > 0))) {
 		fd = dup(fd);	// Java側からcloseされてしまわないようにする
 		result = datalink->connect(fd);
@@ -95,7 +95,7 @@ static jint nativeDisconnect(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	int result = JNI_ERR;
-	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	UsbDataLink2 *datalink = reinterpret_cast<UsbDataLink2 *>(id_datalink);
 	if (LIKELY(datalink)) {
 		result = datalink->disconnect();
 	}
@@ -110,7 +110,7 @@ static jint nativeReset(JNIEnv *env, jobject thiz,
 	ENTER();
 
 	int result = JNI_ERR;
-	UsbDataLink *datalink = reinterpret_cast<UsbDataLink *>(id_datalink);
+	UsbDataLink2 *datalink = reinterpret_cast<UsbDataLink2 *>(id_datalink);
 	if (LIKELY(datalink)) {
 		result = datalink->reset();
 	}
@@ -130,12 +130,12 @@ static JNINativeMethod methods[] = {
 	{ "nativeReset",		"(J)I", (void *) nativeReset },
 };
 
-int register_ncs_movidius_usbdatalink(JNIEnv *env) {
+int register_ncs_movidius_usbdatalink2(JNIEnv *env) {
 	ENTER();
 
 	// ネイティブメソッドを登録
 	if (registerNativeMethods(env,
-		"com/serenegiant/ncsdk/UsbDataLink",
+		"com/serenegiant/ncsdk/UsbDataLink2",
 		methods, NUM_ARRAY_ELEMENTS(methods)) < 0) {
 		RETURN(-1, int);
 	}

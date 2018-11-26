@@ -17,7 +17,8 @@
 #include "common_utils.h"
 
 
-extern int register_ncs_movidius(JNIEnv *env);
+extern int register_ncs_movidius_usbdatalink(JNIEnv *env);
+extern int register_ncs_movidius_usbdatalink2(JNIEnv *env);
 extern int register_ncs_mvnc_api(JNIEnv *env);
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -28,7 +29,10 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return JNI_ERR;
     }
     // register native methods
-	int res = register_ncs_movidius(env);
+	int res = register_ncs_movidius_usbdatalink(env);
+	env->ExceptionClear();
+	CHECK(!res);
+	res = register_ncs_movidius_usbdatalink2(env);
 	env->ExceptionClear();
 	CHECK(!res);
 	res = register_ncs_mvnc_api(env);

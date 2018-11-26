@@ -109,7 +109,7 @@ static void markEventServed(xLinkEventPriv_t *event);
         x--; \
 }
 
-char *TypeToStr(int type) {
+const char *TypeToStr(int type) {
 	switch (type) {
 	case USB_WRITE_REQ:
 		return "USB_WRITE_REQ";
@@ -486,13 +486,16 @@ static void *eventSchedulerRun(void *ctx)
 		mvLog(MVLOG_ERROR, "pthread_attr_init error");
 	}
 #ifndef __PC__
+#if !defined(__ANDROID__)
+	// saki これはAndroidではビルド通らない
 	if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) != 0) {
 		mvLog(MVLOG_ERROR, "pthread_attr_setinheritsched error");
 	}
+#endif	// !defined(__ANDROID__)
 	if (pthread_attr_setschedpolicy(&attr, SCHED_RR) != 0) {
 		mvLog(MVLOG_ERROR, "pthread_attr_setschedpolicy error");
 	}
-#endif
+#endif // __ PC__
 	sc = pthread_create(&readerThreadId, &attr, eventReader, &schedulerId);
 	if (sc) {
 		perror("Thread creation failed");
@@ -700,14 +703,15 @@ int dispatcherStart(void *fd) {
 		mvLog(MVLOG_ERROR, "pthread_attr_init error");
 	}
 #ifndef __PC__
+#if !defined(__ANDROID__)
 	if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) != 0) {
 		mvLog(MVLOG_ERROR, "pthread_attr_setinheritsched error");
 	}
+#endif // !defined(__ANDROID__)
 	if (pthread_attr_setschedpolicy(&attr, SCHED_RR) != 0) {
 		mvLog(MVLOG_ERROR, "pthread_attr_setschedpolicy error");
 	}
-
-#endif
+#endif	// __PC__
 	sem_wait(&addSchedulerSem);
 	mvLog(MVLOG_DEBUG, "%s() starting a new thread - schedulerId %d \n", __func__, idx);
 	int sc = pthread_create(&schedulerState[idx].xLinkThreadId,

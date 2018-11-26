@@ -817,7 +817,7 @@ void dispatcherCloseLink(void *fd, int fullClose) {
 	xLinkDesc_t *link = getLink(fd);
 	ASSERT_X_LINK(link != NULL);
 	if (fullClose) {
-		link->peerState = X_LINK_COMMUNICATION_NOT_OPEN;
+		link->peerState = XLINK_DOWN;	// X_LINK_COMMUNICATION_NOT_OPEN; salo
 		link->id = INVALID_LINK_ID;
 		link->fd = NULL;
 		link->nextUniqueStreamId = 0;
@@ -918,7 +918,7 @@ XLinkError_t XLinkInitialize(XLinkGlobalHandler_t *handler) {
 	}
 #endif
 	
-	int sc = XLinkPlatformInit(glHandler->protocol, glHandler->loglevel);
+	int sc = XLinkPlatformInit((protocol_t)glHandler->protocol, glHandler->loglevel);
 	if (sc != X_LINK_SUCCESS) {
 		return X_LINK_COMMUNICATION_NOT_OPEN;
 	}
@@ -990,7 +990,7 @@ streamId_t XLinkOpenStream(linkId_t id, const char *name, int stream_write_size)
 	
 	if (stream_write_size > 0) {
 		stream_write_size = ALIGN_UP(stream_write_size, __CACHE_LINE_SIZE);
-		event.header.type = operationTypes[glHandler->protocol];
+		event.header.type = (xLinkEventType_t)operationTypes[glHandler->protocol];
 		strncpy(event.header.streamName, name, MAX_NAME_LENGTH);
 		event.header.size = stream_write_size;
 		event.header.streamId = INVALID_STREAM_ID;
@@ -1098,7 +1098,7 @@ XLinkError_t XLinkWriteData(streamId_t streamId, const uint8_t *buffer,
 	struct timespec start, end;
 	clock_gettime(CLOCK_REALTIME, &start);
 	xLinkEvent_t event = {0};
-	event.header.type = operationTypes[glHandler->protocol];
+	event.header.type = (xLinkEventType_t)operationTypes[glHandler->protocol];
 	event.header.size = size;
 	event.header.streamId = streamId;
 	event.xLinkFD = link->fd;
@@ -1156,7 +1156,7 @@ XLinkError_t XLinkReadData(streamId_t streamId, streamPacketDesc_t **packet) {
 	}
 	
 	xLinkEvent_t event = {0};
-	event.header.type = operationTypes[glHandler->protocol];
+	event.header.type = (xLinkEventType_t)operationTypes[glHandler->protocol];
 	event.header.size = 0;
 	event.header.streamId = streamId;
 	event.xLinkFD = link->fd;

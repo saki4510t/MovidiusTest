@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/timeb.h>
+//#include <sys/timeb.h>	// saki Androidのndkには存在しない
 #include <errno.h>
 
 #if (defined(_WIN32) || defined(_WIN64))
@@ -38,12 +38,12 @@ extern void initialize_usb_boot();
 #include <sys/un.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#include <libusb.h>
+//#include <libusb.h>		// saki libusbは使わない
 #include <pthread.h>
 
 #endif
 
-#include "usb_boot.h"
+//#include "usb_boot.h"		// saki 当然これも使わない
 
 #define MAX_EVENTS 64
 #define USB_ENDPOINT_IN 0x81

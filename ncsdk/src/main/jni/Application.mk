@@ -36,7 +36,7 @@ APP_CFLAGS += -Wno-deprecated-register
 #APP_CFLAGS += -Wreorder
 
 #APP_PLATFORM := android-22
-APP_PLATFORM := android-16
+APP_PLATFORM := android-21
 
 #出力アーキテクチャ
 APP_ABI := armeabi-v7a arm64-v8a x86 x86_64

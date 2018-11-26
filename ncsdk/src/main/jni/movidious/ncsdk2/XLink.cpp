@@ -134,7 +134,7 @@ static float timespec_diff(struct timespec *start, struct timespec *stop) {
 int handleIncomingEvent(xLinkEvent_t *event) {
 	//this function will be dependent whether this is a client or a Remote
 	//specific actions to this peer
-	void *buffer;
+	uint8_t *buffer;
 	streamDesc_t *stream;
 	int sc = 0;
 	switch (event->header.type) {
@@ -149,7 +149,7 @@ int handleIncomingEvent(xLinkEvent_t *event) {
 		mvLog(MVLOG_DEBUG, "Got write of %ld, current local fill level is %ld out of %ld %ld\n",
 		  event->header.size, stream->localFillLevel, stream->readSize, stream->writeSize);
 		
-		buffer = allocateData(ALIGN_UP(event->header.size, __CACHE_LINE_SIZE),
+		buffer = (uint8_t *)allocateData(ALIGN_UP(event->header.size, __CACHE_LINE_SIZE),
 		  __CACHE_LINE_SIZE);
 		if (buffer == NULL) {
 			mvLog(MVLOG_FATAL, "out of memory\n");
@@ -417,9 +417,9 @@ int isStreamSpaceEnoughFor(streamDesc_t *stream, uint32_t size) {
 		return 1;
 }
 
-int addNewPacketToStream(streamDesc_t *stream, uint8_t *buffer, uint32_t size) {
+int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size) {
 	if (stream->availablePackets + stream->blockedPackets < USB_LINK_MAX_PACKETS_PER_STREAM) {
-		stream->packets[stream->firstPacketFree].data = buffer;
+		stream->packets[stream->firstPacketFree].data = (uint8_t *)buffer;
 		stream->packets[stream->firstPacketFree].length = size;
 		CIRCULAR_INCREMENT(stream->firstPacketFree, USB_LINK_MAX_PACKETS_PER_STREAM);
 		stream->availablePackets++;
@@ -1048,7 +1048,7 @@ XLinkError_t XLinkGetAvailableStreams(linkId_t id) {
 	return X_LINK_SUCCESS;
 }
 
-XLinkError_t GetDeviceName(int index, char *name, int nameSize, int pid) {
+XLinkError_t GetDeviceName(int index, char *name, size_t &nameSize, int pid) {
 	int rc = -1;
 	if (!pid)
 		rc = XLinkPlatformGetDeviceName(index, name, nameSize);
@@ -1067,11 +1067,11 @@ XLinkError_t GetDeviceName(int index, char *name, int nameSize, int pid) {
 	}
 }
 
-XLinkError_t XLinkGetDeviceName(int index, char *name, int nameSize) {
+XLinkError_t XLinkGetDeviceName(int index, char *name, size_t &nameSize) {
 	return GetDeviceName(index, name, nameSize, 0);
 }
 
-XLinkError_t XLinkGetDeviceNameExtended(int index, char *name, int nameSize, int pid) {
+XLinkError_t XLinkGetDeviceNameExtended(int index, char *name, size_t &nameSize, int pid) {
 	return GetDeviceName(index, name, nameSize, pid);
 }
 

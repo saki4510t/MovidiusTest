@@ -57,10 +57,10 @@ int XLinkPlatformInit(protocol_t protocol, int loglevel);
 
 int XLinkPlatformGetDeviceName(int index,
   char *name,
-  int nameSize);
+  size_t &nameSize);
 int XLinkPlatformGetDeviceNameExtended(int index,
   char *name,
-  int nameSize,
+  size_t &nameSize,
   int pid);
 
 int XLinkPlatformBootRemote(const char *deviceName,

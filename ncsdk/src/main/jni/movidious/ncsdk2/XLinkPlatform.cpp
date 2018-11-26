@@ -71,6 +71,9 @@ size_t gl_packetLength = PCIE_MAX_BUFFER_SIZE;
 size_t gl_packetLength = PACKET_LENGTH;
 #endif
 
+#if defined(__ANDROID__)
+static int usb_loglevel = 0;
+#endif
 /*#################################################################################
 ################################# AUXILIARY FUNCTIONS #############################
 ##################################################################################*/
@@ -237,6 +240,9 @@ static int vsc_usb_write(void *f, void *data, size_t size, unsigned int timeout)
 			ss = 1024 * 1024 * 10;
 #if (defined(_WIN32) || defined(_WIN64))
 		int rc = usb_bulk_write(f, USB_ENDPOINT_OUT, (unsigned char *)data, ss, &bt, timeout);
+#elif defined(__ANDROID__)
+		// FIXME 未実装
+		int rc = -1;
 #else
 		int rc = libusb_bulk_transfer((libusb_device_handle *) f,
 		  USB_ENDPOINT_OUT,
@@ -245,8 +251,9 @@ static int vsc_usb_write(void *f, void *data, size_t size, unsigned int timeout)
 		  &bt,
 		  timeout);
 #endif
-		if (rc)
+		if (rc) {
 			return rc;
+		}
 		data = (char *) data + bt;
 		size -= bt;
 	}
@@ -260,6 +267,9 @@ static int vsc_usb_read(void *f, void *data, size_t size, unsigned int timeout) 
 			ss = 1024 * 1024 * 10;
 #if (defined(_WIN32) || defined(_WIN64))
 		int rc = usb_bulk_read(f, USB_ENDPOINT_IN, (unsigned char *)data, ss, &bt, timeout);
+#elif defined(__ANDROID__)
+		// FIXME 未実装
+		int rc = -1;
 #else
 		int rc = libusb_bulk_transfer((libusb_device_handle *) f,
 		  USB_ENDPOINT_IN,
@@ -268,8 +278,9 @@ static int vsc_usb_read(void *f, void *data, size_t size, unsigned int timeout) 
 		  &bt,
 		  timeout);
 #endif
-		if (rc)
+		if (rc) {
 			return rc;
+		}
 		data = ((char *) data) + bt;
 		size -= bt;
 	}
@@ -279,6 +290,9 @@ static int vsc_usb_read(void *f, void *data, size_t size, unsigned int timeout) 
 static int vsc_usb_open(const char *devPathRead __attribute__((unused)),
   const char *devPathWrite,
   void **fd) {
+#if defined(__ANDROID__)
+		return 0;
+#else
 	usbBootError_t rc = USB_BOOT_DEVICE_NOT_FOUND;
 	libusb_device_handle *h = NULL;
 	libusb_device *dev = NULL;
@@ -330,14 +344,17 @@ static int vsc_usb_open(const char *devPathRead __attribute__((unused)),
 		return 0;
 	
 	return -1;
+#endif
 }
 
 static int vsc_usb_close(void *f) {
+#if !defined(__ANDROID__)
 #if (defined(_WIN32) || defined(_WIN64))
 	usb_close_device(f);
 #else
 	libusb_release_interface((libusb_device_handle *) f, 0);
 	libusb_close((libusb_device_handle *) f);
+#endif
 #endif
 	return 0;
 }
@@ -421,11 +438,11 @@ int XLinkPlatformInit(protocol_t protocol, int loglevel) {
 }
 
 
-int getDeviceName(int index, char *name, int nameSize, int pid) {
+int getDeviceName(int index, char *name, size_t &nameSize, int pid) {
 	switch (gl_protocol) {
 	
 	case Pcie:
-		name = "/dev/ma2x8x_0"; //hardcoded for now
+		name = const_cast<char *>("/dev/ma2x8x_0"); //hardcoded for now
 		nameSize = strlen(name);
 		break;
 	case Ipc:
@@ -434,6 +451,7 @@ int getDeviceName(int index, char *name, int nameSize, int pid) {
 	case UsbVSC:
 		/*should have common device(temporary moved to 'default')*/
 	default:
+#if !defined(__ANDROID__)
 		switch (usb_find_device(index, name, nameSize, 0, 0, pid)) {
 		case USB_BOOT_SUCCESS:
 			return X_LINK_PLATFORM_SUCCESS;
@@ -444,16 +462,17 @@ int getDeviceName(int index, char *name, int nameSize, int pid) {
 		default:
 			return X_LINK_PLATFORM_ERROR;
 		}
+#endif
 		break;
 	}
 	return X_LINK_PLATFORM_SUCCESS;
 }
 
-int XLinkPlatformGetDeviceName(int index, char *name, int nameSize) {
+int XLinkPlatformGetDeviceName(int index, char *name, size_t &nameSize) {
 	return getDeviceName(index, name, nameSize, 0);
 }
 
-int XLinkPlatformGetDeviceNameExtended(int index, char *name, int nameSize, int pid) {
+int XLinkPlatformGetDeviceNameExtended(int index, char *name, size_t &nameSize, int pid) {
 	return getDeviceName(index, name, nameSize, pid);
 }
 
@@ -503,8 +522,10 @@ int XLinkPlatformBootRemote(const char *deviceName, const char *binaryPath) {
 	if (chars_to_write >= 28) {
 		printf("Path to your boot util is too long for the char array here!\n");
 	}
+#if !defined(__ANDROID__)
 	// Boot it
 	rc = usb_boot(deviceName, tx_buf, filesize);
+#endif
 	free(tx_buf);
 	if (rc) {
 		return rc;

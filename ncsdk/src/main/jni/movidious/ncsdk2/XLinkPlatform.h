@@ -21,7 +21,9 @@
 
 #ifndef _XLINK_USBLINKPLATFORM_H
 #define _XLINK_USBLINKPLATFORM_H
+
 #include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -39,40 +41,40 @@ extern "C"
 
 /*
 heep this struc tduplicate for now. think of a different solution*/
-typedef enum{
-    UsbVSC = 0,
-    UsbCDC,
-    Pcie,
-    Ipc,
-    protocols
+typedef enum {
+	UsbVSC = 0,
+	UsbCDC,
+	Pcie,
+	Ipc,
+	protocols
 } protocol_t;
 
-int XLinkWrite(void* fd, void* data, int size, unsigned int timeout);
-int XLinkRead(void* fd, void* data, int size, unsigned int timeout);
-int XLinkPlatformConnect(const char* devPathRead,
-                           const char* devPathWrite, void** fd);
+int XLinkWrite(void *fd, void *data, int size, unsigned int timeout);
+int XLinkRead(void *fd, void *data, int size, unsigned int timeout);
+int XLinkPlatformConnect(const char *devPathRead,
+  const char *devPathWrite, void **fd);
 int XLinkPlatformInit(protocol_t protocol, int loglevel);
 
 int XLinkPlatformGetDeviceName(int index,
-                                char* name,
-                                int nameSize);
+  char *name,
+  int nameSize);
 int XLinkPlatformGetDeviceNameExtended(int index,
-                                char* name,
-                                int nameSize,
-                                int pid);
+  char *name,
+  int nameSize,
+  int pid);
 
-int XLinkPlatformBootRemote(const char* deviceName,
-							const char* binaryPath);
-int XLinkPlatformResetRemote(void* fd);
+int XLinkPlatformBootRemote(const char *deviceName,
+  const char *binaryPath);
+int XLinkPlatformResetRemote(void *fd);
 
-void* allocateData(uint32_t size, uint32_t alignment);
-void deallocateData(void* ptr,uint32_t size, uint32_t alignment);
+void *allocateData(uint32_t size, uint32_t alignment);
+void deallocateData(void *ptr, uint32_t size, uint32_t alignment);
 
 typedef enum usbLinkPlatformErrorCode {
-    X_LINK_PLATFORM_SUCCESS = 0,
-    X_LINK_PLATFORM_ERROR,
-    X_LINK_PLATFORM_DEVICE_NOT_FOUND,
-    X_LINK_PLATFORM_TIMEOUT
+	X_LINK_PLATFORM_SUCCESS = 0,
+	X_LINK_PLATFORM_ERROR,
+	X_LINK_PLATFORM_DEVICE_NOT_FOUND,
+	X_LINK_PLATFORM_TIMEOUT
 } usbLinkPlatformErrorCode_t;
 
 #ifdef __cplusplus

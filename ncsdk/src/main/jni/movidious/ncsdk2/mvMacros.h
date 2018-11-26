@@ -28,13 +28,13 @@
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((!(sizeof(x) % sizeof(0[x])))))
 #ifndef MIN
-#define MIN(a,b)                                \
+#define MIN(a, b)                                \
     ({ __typeof__ (a) _a = (a);                 \
         __typeof__ (b) _b = (b);                \
         _a < _b ? _a : _b; })
 #endif
 #ifndef MAX
-#define MAX(a,b)                                \
+#define MAX(a, b)                                \
     ({ __typeof__ (a) _a = (a);                 \
         __typeof__ (b) _b = (b);                \
         _a > _b ? _a : _b; })
@@ -43,7 +43,7 @@
 /// @param[in] x number or pointer to be aligned
 /// @param[in] a value to align to (must be power of 2)
 /// @returns the aligned value
-#if (defined(_WIN32) || defined(_WIN64) )
+#if (defined(_WIN32) || defined(_WIN64))
 #define ALIGN_UP_UINT32(x, a)   ((uint32_t)(((uint32_t)(x) + a - 1) & (~(a-1))))
 #define ALIGN_UP_INT32(x, a)   ((int32_t)(((uint32_t)(x) + a - 1) & (~(a-1))))
 #define ALIGN_UP(x, a) ALIGN_UP_UINT32(x,a)

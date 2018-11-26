@@ -6,7 +6,9 @@
       <w>mvcmd</w>
       <w>mvnc</w>
       <w>ncsdk</w>
+      <w>pcie</w>
       <w>usbdatalink</w>
+      <w>xlink</w>
     </words>
   </dictionary>
 </component>

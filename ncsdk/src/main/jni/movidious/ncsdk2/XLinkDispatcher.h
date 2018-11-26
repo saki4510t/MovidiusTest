@@ -23,35 +23,40 @@
 #ifndef _XLINKDISPATCHER_H
 #define _XLINKDISPATCHER_H
 #define _XLINK_ENABLE_PRIVATE_INCLUDE_
+
 #include "XLinkPrivateDefines.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-typedef int (*getRespFunction) (xLinkEvent_t*,
-                xLinkEvent_t*);
+typedef int (*getRespFunction)(xLinkEvent_t *,
+  xLinkEvent_t *);
 ///Adds a new event with parameters and returns event.header.id
-xLinkEvent_t* dispatcherAddEvent(xLinkEventOrigin_t origin,
-                                    xLinkEvent_t *event);
+xLinkEvent_t *dispatcherAddEvent(xLinkEventOrigin_t origin,
+  xLinkEvent_t *event);
 
-int dispatcherWaitEventComplete(void* xlinkFD);
+int dispatcherWaitEventComplete(void *xlinkFD);
 int dispatcherUnblockEvent(eventId_t id,
-                            xLinkEventType_t type,
-                            streamId_t stream,
-                            void* xlinkFD);
+  xLinkEventType_t type,
+  streamId_t stream,
+  void *xlinkFD);
 
 struct dispatcherControlFunctions {
-                                int (*eventSend) (xLinkEvent_t*);
-                                int (*eventReceive) (xLinkEvent_t*);
-                                getRespFunction localGetResponse;
-                                getRespFunction remoteGetResponse;
-                                void (*closeLink) (void* fd, int fullClose);
-                                void (*resetDevice) (void* fd);
-                                };
+	int (*eventSend)(xLinkEvent_t *);
+	
+	int (*eventReceive)(xLinkEvent_t *);
+	
+	getRespFunction localGetResponse;
+	getRespFunction remoteGetResponse;
+	
+	void (*closeLink)(void *fd, int fullClose);
+	
+	void (*resetDevice)(void *fd);
+};
 
-int dispatcherInitialize(struct dispatcherControlFunctions* controlFunc);
-int dispatcherStart(void* fd);
+int dispatcherInitialize(struct dispatcherControlFunctions *controlFunc);
+int dispatcherStart(void *fd);
 
 #ifdef __cplusplus
 }

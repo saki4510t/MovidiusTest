@@ -44,8 +44,8 @@
 #include <rtems/bspIo.h>
 #endif
 
- // Windows-only
-#if (defined (WINNT) || defined(_WIN32) || defined(_WIN64) )
+// Windows-only
+#if (defined (WINNT) || defined(_WIN32) || defined(_WIN64))
 #define __attribute__(x)
 #endif
 
@@ -85,26 +85,26 @@
 #define MVLOG_FATAL_COLOR ANSI_COLOR_RED
 #endif
 
-typedef enum mvLog_t{
-    MVLOG_DEBUG = 0,
-    MVLOG_INFO,
-    MVLOG_WARN,
-    MVLOG_ERROR,
-    MVLOG_FATAL,
-    MVLOG_LAST,
+typedef enum mvLog_t {
+	MVLOG_DEBUG = 0,
+	MVLOG_INFO,
+	MVLOG_WARN,
+	MVLOG_ERROR,
+	MVLOG_FATAL,
+	MVLOG_LAST,
 } mvLog_t;
 
 #ifdef __shave__
 __attribute__((section(".laststage")))
 #endif
 static const char mvLogHeader[MVLOG_LAST][30] =
-{
-    MVLOG_DEBUG_COLOR "D:",
-    MVLOG_INFO_COLOR  "I:",
-    MVLOG_WARN_COLOR  "W:",
-    MVLOG_ERROR_COLOR "E:",
-    MVLOG_FATAL_COLOR "F:"
-};
+  {
+	MVLOG_DEBUG_COLOR "D:",
+	MVLOG_INFO_COLOR  "I:",
+	MVLOG_WARN_COLOR  "W:",
+	MVLOG_ERROR_COLOR "E:",
+	MVLOG_FATAL_COLOR "F:"
+  };
 
 // #ifdef __shave__
 // __attribute__((section(".laststage")))
@@ -119,48 +119,48 @@ static unsigned int MVLOGLEVEL(default) = MVLOG_INFO;
 #ifdef __shave__
 __attribute__((section(".laststage")))
 #endif
+
 static int __attribute__ ((unused))
-logprintf(enum mvLog_t lvl, const char * func, const int line,
-                     const char * format, ...)
-{
-    if(lvl < MVLOGLEVEL(MVLOG_UNIT_NAME) &&
-       lvl < MVLOGLEVEL(default))
-        return 0;
-
-    const char headerFormat[] = "%s [%10" PRId64 "] %s:%d\t";
+logprintf(enum mvLog_t lvl, const char *func, const int line,
+  const char *format, ...) {
+	if (lvl < MVLOGLEVEL(MVLOG_UNIT_NAME) &&
+		lvl < MVLOGLEVEL(default))
+		return 0;
+	
+	const char headerFormat[] = "%s [%10" PRId64 "] %s:%d\t";
 #ifdef __RTEMS__
-    uint64_t timestamp = rtems_clock_get_uptime_nanoseconds() / 1000;
+	uint64_t timestamp = rtems_clock_get_uptime_nanoseconds() / 1000;
 #else
-    uint64_t timestamp = 0;
+	uint64_t timestamp = 0;
 #endif
-    va_list args;
-    va_start (args, format);
+	va_list args;
+	va_start (args, format);
 
 #ifdef __RTEMS__
-    if(!rtems_interrupt_is_in_progress())
-    {
+	if(!rtems_interrupt_is_in_progress())
+	{
 #endif
 #if defined __sparc__ || defined __PC__
-        fprintf(stdout, headerFormat, mvLogHeader[lvl], timestamp, func, line);
-        vfprintf(stdout, format, args);
-        fprintf(stdout, "%s\n", ANSI_COLOR_RESET);
+	fprintf(stdout, headerFormat, mvLogHeader[lvl], timestamp, func, line);
+	vfprintf(stdout, format, args);
+	fprintf(stdout, "%s\n", ANSI_COLOR_RESET);
 #elif defined __shave__
-        printf(headerFormat, mvLogHeader[lvl], timestamp, func, line);
-        printf(format, args);
-        printf("%s\n", ANSI_COLOR_RESET);
+	printf(headerFormat, mvLogHeader[lvl], timestamp, func, line);
+	printf(format, args);
+	printf("%s\n", ANSI_COLOR_RESET);
 
 #endif
 #ifdef __RTEMS__
-    }
-    else
-    {
-        printk(headerFormat, mvLogHeader[lvl], timestamp, func, line);
-        vprintk(format, args);
-        printk("%s\n", ANSI_COLOR_RESET);
-    }
+	}
+	else
+	{
+		printk(headerFormat, mvLogHeader[lvl], timestamp, func, line);
+		vprintk(format, args);
+		printk("%s\n", ANSI_COLOR_RESET);
+	}
 #endif
-    va_end (args);
-    return 0;
+	va_end (args);
+	return 0;
 }
 
 #define mvLog(lvl, format, ...)                                 \

@@ -54,6 +54,9 @@ LOCAL_SRC_FILES := \
 	serenegiant_ncsdk_mvncapi.cpp \
 	serenegiant_ncsdk_usbdatalink.cpp \
 	serenegiant_ncsdk_usbdatalink2.cpp \
+	ncsdk2/XLink.cpp \
+	ncsdk2/XLinkDispatcher.cpp \
+	ncsdk2/XLinkPlatform.cpp \
 	test/fp16.cpp \
 	test/multistick.cpp \
 

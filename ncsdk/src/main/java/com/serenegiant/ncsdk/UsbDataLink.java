@@ -130,6 +130,9 @@ public class UsbDataLink extends NativeObject implements IDataLink {
 				}
 				if (found) {
 					// FIXME Neural Compute Stick2だとncsdk2.xにしないとだめかも
+					// ncsdk1の時はmvncapi.mvcmd,
+					// ncsdk2の時はmvncapi_xxxxxx.mvcmdでxxxxxは機器によって変える
+					// xxxxx = ma2450(Neural Compute Stick)またはma2480(Neural Compute Stick 2)
 					usbBoot(mCtrlBlock, R.raw.mvncapi);
 					result = 0;
 				}

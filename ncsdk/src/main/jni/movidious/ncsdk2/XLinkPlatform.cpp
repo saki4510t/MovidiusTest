@@ -398,16 +398,16 @@ static int pcie_host_close(void *f __attribute__((unused))) {
 /*These arrays hold the write/read/open/close operation functions
 specific for each communication protocol.
 Add more functions if adding another protocol*/
-int (*write_fcts[protocols])(void *, const void *, const size_t &, const unsigned int &) = \
+int (*write_fcts[MAX_PROTOCOLS])(void *, const void *, const size_t &, const unsigned int &) = \
                             {vsc_usb_write, cdc_usb_write, pcie_host_write};
 
-int (*read_fcts[protocols])(void *, void *, const size_t &, const unsigned int &) = \
+int (*read_fcts[MAX_PROTOCOLS])(void *, void *, const size_t &, const unsigned int &) = \
                             {vsc_usb_read, cdc_usb_read, pcie_host_read};
 
-int (*open_fcts[protocols])(const char *, const char *, void **) = \
+int (*open_fcts[MAX_PROTOCOLS])(const char *, const char *, void **) = \
                             {vsc_usb_open, cdc_usb_open, pcie_host_open};
 
-int (*close_fcts[protocols])(void *) = \
+int (*close_fcts[MAX_PROTOCOLS])(void *) = \
                             {vsc_usb_close, cdc_usb_close, pcie_host_close};
 
 /*#################################################################################

@@ -46,7 +46,7 @@ typedef enum {
 	UsbCDC,
 	Pcie,
 	Ipc,
-	protocols
+	MAX_PROTOCOLS
 } protocol_t;
 
 int XLinkWrite(void *fd, const void *data, const size_t &size, const unsigned int &timeout);

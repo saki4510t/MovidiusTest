@@ -22,6 +22,7 @@ import com.serenegiant.dialog.MessageDialogFragmentV4;
 import com.serenegiant.ncsdk.IDataLink;
 import com.serenegiant.ncsdk.MvNcAPI;
 import com.serenegiant.ncsdk.UsbDataLink;
+import com.serenegiant.ncsdk.UsbDataLink2;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.utils.BuildCheck;
@@ -42,6 +43,8 @@ public class MainActivity extends AppCompatActivity
 	private static final boolean DEBUG = true;
 	private static final String TAG = MainActivity.class.getSimpleName();
 	
+	private static final boolean USE_NCSDK2 = true;
+
 	// カメラステート
 	private static final int CAMERA_NON = 0;
 	private static final int CAMERA_TRYOPEN = 1;
@@ -576,13 +579,17 @@ public class MainActivity extends AppCompatActivity
 			}	// synchronized (mCameraSync)
 			if (openDevice) {
 				// カメラをopen
-				final UsbDataLink dataLink;
+				final IDataLink dataLink;
 				try {
 					// FIXME ncsdk1.xかncsdk2.xかでデータリンクの型を変える
 					// ncsdk1.xはUsbDataLink
 					// ncsdk2.xはUsbDataLink2
 					// Stick2はncsdk2.xのみ対応なのでUsbDataLink2
-					dataLink = new UsbDataLink(MainActivity.this);
+					if (USE_NCSDK2) {
+						dataLink = new UsbDataLink2(MainActivity.this);
+					} else {
+						dataLink = new UsbDataLink(MainActivity.this);
+					}
 				} catch (final Exception e) {
 					synchronized (mSync) {
 						mCameraState = CAMERA_NON;
@@ -591,7 +598,11 @@ public class MainActivity extends AppCompatActivity
 				}
 				queueEvent(() -> {
 					try {
-						dataLink.open(ctrlBlock);
+						if (dataLink instanceof UsbDataLink) {
+							((UsbDataLink)dataLink).open(ctrlBlock);
+						} else if (dataLink instanceof UsbDataLink2) {
+							((UsbDataLink2)dataLink).open(ctrlBlock);
+						}
 						mMvNcAPI.add(dataLink);
 					} catch (final Exception e) {
 						Log.w(TAG, e);

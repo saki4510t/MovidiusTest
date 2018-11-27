@@ -38,6 +38,10 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#if defined(__ANDROID__)
+#include "usb_data_link2.h"
+#endif
+
 #endif
 
 #include "mvMacros.h"

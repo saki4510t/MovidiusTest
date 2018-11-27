@@ -242,7 +242,7 @@ static int vsc_usb_write(void *f, const void *data, const size_t &size, const un
 #if (defined(_WIN32) || defined(_WIN64))
 		int rc = usb_bulk_write(f, USB_ENDPOINT_OUT, (unsigned char *)data, ss, &bt, timeout);
 #elif defined(__ANDROID__)
-		// FIXME 未実装
+		// FIXME 未実装 fからDataLinkクラスを探さないといけない
 		int rc = -1;
 #else
 		int rc = libusb_bulk_transfer((libusb_device_handle *) f,
@@ -271,7 +271,7 @@ static int vsc_usb_read(void *f, void *data, const size_t &size, const unsigned 
 #if (defined(_WIN32) || defined(_WIN64))
 		int rc = usb_bulk_read(f, USB_ENDPOINT_IN, (unsigned char *)data, ss, &bt, timeout);
 #elif defined(__ANDROID__)
-		// FIXME 未実装
+		// FIXME 未実装 fからDataLinkクラスを探さないといけない
 		int rc = -1;
 #else
 		int rc = libusb_bulk_transfer((libusb_device_handle *) f,
@@ -442,8 +442,8 @@ int XLinkPlatformInit(const protocol_t &protocol, const int &loglevel) {
 
 
 int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid) {
+#if !defined(__ANDROID__)
 	switch (gl_protocol) {
-	
 	case Pcie:
 		name = const_cast<char *>("/dev/ma2x8x_0"); //hardcoded for now
 		nameSize = strlen(name);
@@ -454,7 +454,6 @@ int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid
 	case UsbVSC:
 		/*should have common device(temporary moved to 'default')*/
 	default:
-#if !defined(__ANDROID__)
 		switch (usb_find_device(index, name, nameSize, 0, 0, pid)) {
 		case USB_BOOT_SUCCESS:
 			return X_LINK_PLATFORM_SUCCESS;
@@ -465,9 +464,9 @@ int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid
 		default:
 			return X_LINK_PLATFORM_ERROR;
 		}
-#endif
 		break;
 	}
+#endif
 	return X_LINK_PLATFORM_SUCCESS;
 }
 

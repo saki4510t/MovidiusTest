@@ -27,8 +27,6 @@ private:
 	mutable Mutex lock;
 	volatile bool active;
 	
-	int write(const void *data, const size_t &size);
-	int read(void *data, const size_t &size);
 protected:
 public:
 	UsbDataLink2(jobject obj);
@@ -48,6 +46,8 @@ public:
 	virtual int get_data(const char *name,
 		void *data, const uint32_t &length, const uint32_t &offset,
 		const bool &host_ready);
+	int write(const void *data, const size_t &size);
+	int read(void *data, const size_t &size);
 };
 
 }	// namespace ncs

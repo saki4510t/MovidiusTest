@@ -45,6 +45,9 @@ LOCAL_CFLAGS += -Wl,--version-script,movidius.map
 #LOCAL_CFLAGS +=-save-temps					# このオプションをつけると中間ファイルを削除しない(プロジェクトルートに残る)
 #LOCAL_FILTER_ASM := python -c 'import sys; import shutil; src = open(sys.argv[1], "rb"); dst = open(sys.argv[2], "wb"); shutil.copyfileobj(src,dst);'
 
+LOCAL_CFLAGS += -DNCSDK_VERSION_NAME="\"2.08.01.02\""
+LOCAL_CFLAGS += -DEXCLUDE_HIGHCLASS
+
 LOCAL_SRC_FILES := \
 	_onload.cpp \
 	usb_data_link.cpp \
@@ -57,6 +60,7 @@ LOCAL_SRC_FILES := \
 	ncsdk2/XLink.cpp \
 	ncsdk2/XLinkDispatcher.cpp \
 	ncsdk2/XLinkPlatform.cpp \
+	ncsdk2/mvnc_api.cpp \
 	test/fp16.cpp \
 	test/multistick.cpp \
 

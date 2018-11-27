@@ -201,7 +201,7 @@ int UsbDataLink2::get_data(const char *name,
 #define USB_TIMEOUT 		10000
 #define USB_MAX_PACKET_SIZE	1024 * 1024 * 10
 
-/*private*/
+/*public*/
 int UsbDataLink2::write(const void *data, const size_t &size) {
 	ENTER();
 	
@@ -233,7 +233,7 @@ int UsbDataLink2::write(const void *data, const size_t &size) {
 	RETURN(result, int);
 }
 
-/*private*/
+/*public*/
 int UsbDataLink2::read(void *data, const size_t &size) {
 	ENTER();
 	

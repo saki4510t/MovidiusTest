@@ -22,12 +22,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define MAX_NAME_LENGTH 52
+#define NCSDK1_MAX_NAME_LENGTH 52
 // Packet length will define the maximum message length between pc and myriad. All bigger messages than this number will be split in multiple messages
 #define PACKET_LENGTH (64*1024)
 
 typedef struct bufferEntryDesc_t {
-	char name[MAX_NAME_LENGTH];
+	char name[NCSDK1_MAX_NAME_LENGTH];
 	uint8_t *data;
 	uint32_t length;
 } bufferEntryDesc_t;
@@ -54,7 +54,7 @@ typedef struct usbHeader_t {
 	uint16_t reserved;
 	uint32_t dataLength;
 	uint32_t offset;
-	char name[MAX_NAME_LENGTH];
+	char name[NCSDK1_MAX_NAME_LENGTH];
 } usbHeader_t;
 
 #ifdef __cplusplus

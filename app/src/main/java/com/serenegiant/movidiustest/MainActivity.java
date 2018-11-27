@@ -45,12 +45,12 @@ public class MainActivity extends AppCompatActivity
 	
 	private static final boolean USE_NCSDK2 = true;
 
-	// カメラステート
-	private static final int CAMERA_NON = 0;
-	private static final int CAMERA_TRYOPEN = 1;
-	private static final int CAMERA_INITIALIZING = 2;
-	private static final int CAMERA_ACTIVE = 3;
-	private static final int CAMERA_PREVIEWING = 4;
+	// NCSステート
+	private static final int NCS_NON = 0;
+	private static final int NCS_TRYOPEN = 1;
+	private static final int NCS_INITIALIZING = 2;
+	private static final int NCS_ACTIVE = 3;
+	private static final int NCS_PREVIEWING = 4;
 
 	private static final int CORE_POOL_SIZE = 1;		// initial/minimum threads
 	private static final int MAX_POOL_SIZE = 4;			// maximum threads
@@ -436,7 +436,7 @@ public class MainActivity extends AppCompatActivity
 		synchronized (mSync) {
 			final List<IDataLink> list = mMvNcAPI.getDatalinkAll();
 			if (!list.isEmpty()) {
-				mCameraState = CAMERA_NON;
+				mCameraState = NCS_NON;
 				queueEvent(() -> {
 					for (final IDataLink dataLink: list) {
 						synchronized (mSync) {
@@ -479,14 +479,14 @@ public class MainActivity extends AppCompatActivity
 	protected void handleTryOpen(final boolean requestPermission) {
 	    if (DEBUG) Log.v(TAG, "handleTryOpen:");
 		synchronized (mSync) {
-			if (mCameraState == CAMERA_NON) {
-				mCameraState = CAMERA_TRYOPEN;
+			if (mCameraState == NCS_NON) {
+				mCameraState = NCS_TRYOPEN;
 				final List<UsbDevice> devices = mUSBMonitor.getDeviceList();
 				final int n = devices.size();
 				if ((n == 1)
 					&& (requestPermission || mUSBMonitor.hasPermission(devices.get(0))) ) {
 					if (DEBUG) Log.v(TAG, "handleTryOpen:requestPermission");
-					// 接続されているUVCカメラが1台だけでパーミッションが有るかパーミッション要求フラグがセットされていれば開く
+					// 接続されているNCSが1台だけでパーミッションが有るかパーミッション要求フラグがセットされていれば開く
 					final boolean result = mUSBMonitor.requestPermission(devices.get(0));
 					if (result) {
 						showMessage("USBホスト機能が無効です", Snackbar.LENGTH_INDEFINITE);
@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity
 						CameraDialogV4.showDialog(this);
 						return;
 					}
-					mCameraState = CAMERA_NON;
+					mCameraState = NCS_NON;
 					if (n == 0) {
 						showMessage("Movidiusが見つかりません", Snackbar.LENGTH_INDEFINITE);
 					}
@@ -506,11 +506,11 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	/**
-	 * カメラダイアログが表示されていれば更新する
-	 * @return カメラダイアログが表示されているかどうか falseなら表示されていない
+	 * 選択ダイアログが表示されていれば更新する
+	 * @return ダイアログが表示されているかどうか falseなら表示されていない
 	 */
-	private boolean updateCameraDialog() {
-		if (DEBUG) Log.v(TAG, "updateCameraDialog:");
+	private boolean updateNCSDialog() {
+		if (DEBUG) Log.v(TAG, "updateNCSDialog:");
 		final Fragment fragment = getSupportFragmentManager().findFragmentByTag("CameraDialog");
 		if (fragment instanceof CameraDialogV4) {
 			((CameraDialogV4)fragment).updateDevices();
@@ -520,21 +520,21 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	/**
-	 * 接続されているカメラを確認する
+	 * 接続されているNCSを確認する
 	 * 1台も接続されていない時は画面にメッセージを表示する
 	 */
 	protected void updateConnectedCameras() {
 		if (DEBUG) Log.v(TAG, "updateConnectedCameras:");
 		queueEvent(() -> {
 			final int n = (mUSBMonitor != null) ? mUSBMonitor.getDeviceCount() : 0;
-			showMessage("カメラが見つかりません", Snackbar.LENGTH_INDEFINITE);
+			showMessage("NCSが見つかりません", Snackbar.LENGTH_INDEFINITE);
 		}, 0);
 	}
 
-	private int mCameraState = CAMERA_NON;
+	private int mCameraState = NCS_NON;
 
 	/**
-	 * 接続されているUVCカメラが1台だけでパーミッションが有れば開く
+	 * 接続されているNCSが1台だけでパーミッションが有れば開く
 	 */
 	private void tryOpenDevice(final boolean requestPermission, final long delayMillis) {
 		if (DEBUG) Log.v(TAG, "tryOpenDevice:mCameraState=" + mCameraState);
@@ -555,13 +555,13 @@ public class MainActivity extends AppCompatActivity
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onAttach:");
 			cancelMessage();
 			synchronized (mSync) {
-				if (!updateCameraDialog()) {	// カメラダイアログを更新する(カメラダイアログが表示されて無ければfalseが返る)
-					if (mCameraState == CAMERA_NON) {
-						// カメラダイアログが表示されてなくてカメラがopenしていなければopenを試みる
-						tryOpenDevice(true, 0);	// true:接続されているカメラが1台だけならパーミッションを要求してopenを試みる
+				if (!updateNCSDialog()) {	// 選択ダイアログを更新する(選択ダイアログが表示されて無ければfalseが返る)
+					if (mCameraState == NCS_NON) {
+						// 選択ダイアログが表示されてなくてNCSがopenしていなければopenを試みる
+						tryOpenDevice(true, 0);	// true:接続されているNCSが1台だけならパーミッションを要求してopenを試みる
 					}
 				}
-			}	// synchronized (mCameraSync)
+			}	// synchronized (mSync)
 		}
 
 		@Override
@@ -572,13 +572,13 @@ public class MainActivity extends AppCompatActivity
 			cancelMessage();
 			boolean openDevice = false;
 			synchronized (mSync) {
-				if (mCameraState == CAMERA_TRYOPEN) {
-					mCameraState = CAMERA_INITIALIZING;
+				if (mCameraState == NCS_TRYOPEN) {
+					mCameraState = NCS_INITIALIZING;
 					openDevice = true;
 				}
-			}	// synchronized (mCameraSync)
+			}	// synchronized (mSync)
 			if (openDevice) {
-				// カメラをopen
+				// NCSをopen
 				final IDataLink dataLink;
 				try {
 					// FIXME ncsdk1.xかncsdk2.xかでデータリンクの型を変える
@@ -592,8 +592,8 @@ public class MainActivity extends AppCompatActivity
 					}
 				} catch (final Exception e) {
 					synchronized (mSync) {
-						mCameraState = CAMERA_NON;
-					}	// synchronized (mCameraSync)
+						mCameraState = NCS_NON;
+					}	// synchronized (mSync)
 					return;
 				}
 				queueEvent(() -> {
@@ -617,21 +617,21 @@ public class MainActivity extends AppCompatActivity
 
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onDisconnect:");
 			synchronized (mSync) {
-				if ((mCameraState != CAMERA_NON)) {
+				if ((mCameraState != NCS_NON)) {
 					final IDataLink dataLink = mMvNcAPI.getDatalink(device);
 					if (dataLink != null) {
 						close(dataLink);
 					}
 
 				}
-			}	// synchronized (mCameraSync)
+			}	// synchronized (mSync)
 		}
 
 		@Override
 		public void onDettach(final UsbDevice device) {
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener:onDettach:");
 			updateConnectedCameras();
-			updateCameraDialog();
+			updateNCSDialog();
 		}
 
 		@Override
@@ -639,7 +639,7 @@ public class MainActivity extends AppCompatActivity
 			if (DEBUG) Log.v(TAG, "onCancel:");
 			// パーミッションを取得できなかった時
 			synchronized (mSync) {
-				mCameraState = CAMERA_NON;
+				mCameraState = NCS_NON;
 			}
 			updateConnectedCameras();
 		}

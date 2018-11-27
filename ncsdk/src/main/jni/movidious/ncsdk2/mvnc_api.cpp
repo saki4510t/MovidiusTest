@@ -194,7 +194,7 @@ static void convertDataTypeAndLayout(const unsigned char* src, unsigned char* ds
     }
 }
 
-void printImg(unsigned char* inputTensor, struct ncTensorDescriptor_t* inputDesc) {
+static void printImg(unsigned char* inputTensor, struct ncTensorDescriptor_t* inputDesc) {
     for (int c = 0; c < inputDesc->c; c++) {
         for (int row = 0; row < inputDesc->h; row++) { //row
             for (int col = 0; col < inputDesc->w; col++) {
@@ -2218,7 +2218,7 @@ ncStatus_t ncFifoCreate(const char *name, ncFifoType_t type,
     return NC_OK;
 }
 
-int pushUserParam(struct _fifoPrivate_t *fH, void *user_param, int isIn)
+static int pushUserParam(struct _fifoPrivate_t *fH, void *user_param, int isIn)
 {
     struct _userParamPrivate_t *new_user_param =
 	  (struct _userParamPrivate_t *)calloc(1, sizeof(struct _userParamPrivate_t));
@@ -2238,7 +2238,7 @@ int pushUserParam(struct _fifoPrivate_t *fH, void *user_param, int isIn)
     return NC_OK;
 }
 
-int popUserParam(struct _fifoPrivate_t *fH, void **user_param, int isIn)
+static int popUserParam(struct _fifoPrivate_t *fH, void **user_param, int isIn)
 {
     struct _userParamPrivate_t *prev = NULL;
     struct _userParamPrivate_t *curr = NULL;
@@ -2278,9 +2278,9 @@ int popUserParam(struct _fifoPrivate_t *fH, void **user_param, int isIn)
     return NC_OK;
 }
 
-void getStrides(ncFifoLayout_t layout, struct ncTensorDescriptor_t* desc,
+static void getStrides(ncFifoLayout_t layout, struct ncTensorDescriptor_t* desc,
     ncFifoDataType_t dataType) {
-    int baseStride = dataType == NC_FIFO_FP16 ? FP16_DATA_SIZE : sizeof(float);
+    unsigned int baseStride = dataType == NC_FIFO_FP16 ? FP16_DATA_SIZE : sizeof(float);
     switch (layout) {
         case NC_FIFO_HWC:
             desc->cStride = baseStride;
@@ -2609,7 +2609,7 @@ ncStatus_t ncFifoWriteElem(struct ncFifoHandle_t * fifoHandle,
     }
     if (*inputTensorLength != handle->datasize) {
             mvLog(MVLOG_ERROR,
-                  "input tensor length (%d) doesnt match expected value (%d)",
+                  "input tensor length (%u) doesnt match expected value (%u)",
                   *inputTensorLength, handle->datasize);
             *inputTensorLength = handle->datasize;
             return NC_INVALID_DATA_LENGTH;

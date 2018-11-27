@@ -73,6 +73,7 @@ typedef struct {
 	__attribute__((aligned(64))) xLinkEventPriv_t q[MAX_EVENTS];
 	
 } eventQueueHandler_t;
+
 typedef struct {
 	void *xLinkFD; //will be device handler
 	int schedulerId;
@@ -163,7 +164,7 @@ xLinkSchedulerState_t schedulerState[MAX_SCHEDULERS];
 sem_t addSchedulerSem;
 
 //below workaround for "C2088 '==': illegal for struct" error
-int pthread_t_compare(pthread_t a, pthread_t b) {
+static int pthread_t_compare(pthread_t a, pthread_t b) {
 #if (defined(_WIN32) || defined(_WIN64))
 	return ((a.tid == b.tid));
 #else
@@ -649,7 +650,7 @@ int dispatcherUnblockEvent(eventId_t id, xLinkEventType_t type, streamId_t strea
 	return 0;
 }
 
-int findAvailableScheduler() {
+static int findAvailableScheduler() {
 	int i;
 	for (i = 0; i < MAX_SCHEDULERS; i++)
 		if (schedulerState[i].schedulerId == -1)

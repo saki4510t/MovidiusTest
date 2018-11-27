@@ -74,6 +74,7 @@ size_t gl_packetLength = PACKET_LENGTH;
 #if defined(__ANDROID__)
 static int usb_loglevel = 0;
 #endif
+
 /*#################################################################################
 ################################# AUXILIARY FUNCTIONS #############################
 ##################################################################################*/
@@ -441,7 +442,7 @@ int XLinkPlatformInit(const protocol_t &protocol, const int &loglevel) {
 }
 
 
-int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid) {
+static int getDeviceName(const int &index, char *name, size_t &nameSize, const int &pid) {
 #if !defined(__ANDROID__)
 	switch (gl_protocol) {
 	case Pcie:

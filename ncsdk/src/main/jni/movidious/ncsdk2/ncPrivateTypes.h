@@ -123,7 +123,7 @@ struct _fifoPrivate_t {
     int num_elements;
     int api_read_element;
     int consumers_remaining;
-    int datasize;
+    unsigned int datasize;
     pthread_mutex_t fifo_mutex;
     ncFifoState_t state;
 };

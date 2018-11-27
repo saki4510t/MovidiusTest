@@ -42,7 +42,7 @@ streamId_t XLinkOpenStream(linkId_t id, const char *name, int stream_write_size)
 
 // Close stream for any further data transfer
 // Stream will be deallocated when all pending data has been released
-XLinkError_t XLinkCloseStream(streamId_t streamId);
+XLinkError_t XLinkCloseStream(const streamId_t &streamId);
 
 // Currently useless
 XLinkError_t XLinkGetAvailableStreams(linkId_t id);

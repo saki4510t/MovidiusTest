@@ -84,18 +84,18 @@
      streamId = streamId | ((linkid & 0xFF) << 24);
 
 
-int dispatcherLocalEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response);
+static int dispatcherLocalEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response);
 
-int dispatcherRemoteEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response);
+static int dispatcherRemoteEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response);
 
 //adds a new event with parameters and returns event id
-int dispatcherEventSend(xLinkEvent_t *event);
+static int dispatcherEventSend(xLinkEvent_t *event);
 
-streamDesc_t *getStreamById(void *fd, streamId_t id);
+static streamDesc_t *getStreamById(void *fd, streamId_t id);
 
-void releaseStream(streamDesc_t *);
+static void releaseStream(streamDesc_t *);
 
-int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size);
+static int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size);
 
 struct dispatcherControlFunctions controlFunctionTbl;
 XLinkGlobalHandler_t *glHandler; //TODO need to either protect this with semaphor
@@ -135,7 +135,7 @@ static float timespec_diff(struct timespec *start, struct timespec *stop) {
 	return start->tv_nsec / 1000000000.0 + start->tv_sec;
 }
 
-int handleIncomingEvent(xLinkEvent_t *event) {
+static int handleIncomingEvent(xLinkEvent_t *event) {
 	//this function will be dependent whether this is a client or a Remote
 	//specific actions to this peer
 	uint8_t *buffer;
@@ -237,7 +237,7 @@ int handleIncomingEvent(xLinkEvent_t *event) {
 	return 0;
 }
 
-int dispatcherEventReceive(xLinkEvent_t *event) {
+static int dispatcherEventReceive(xLinkEvent_t *event) {
 	static xLinkEvent_t prevEvent;
 	int sc = XLinkRead(event->xLinkFD, &event->header, sizeof(event->header), 0);
 	
@@ -279,7 +279,7 @@ int dispatcherEventReceive(xLinkEvent_t *event) {
 	return 0;
 }
 
-int getLinkIndex(void *fd) {
+static int getLinkIndex(void *fd) {
 	int i;
 	for (i = 0; i < MAX_LINKS; i++)
 		if (availableXLinks[i].fd == fd)
@@ -287,7 +287,7 @@ int getLinkIndex(void *fd) {
 	return -1;
 }
 
-xLinkDesc_t *getLinkById(linkId_t id) {
+static xLinkDesc_t *getLinkById(linkId_t id) {
 	int i;
 	for (i = 0; i < MAX_LINKS; i++)
 		if (availableXLinks[i].id == id)
@@ -303,7 +303,7 @@ xLinkDesc_t *getLink(void *fd) {
 	return NULL;
 }
 
-int getNextAvailableLinkIndex() {
+static int getNextAvailableLinkIndex() {
 	int i;
 	for (i = 0; i < MAX_LINKS; i++)
 		if (availableXLinks[i].id == INVALID_LINK_ID)
@@ -313,7 +313,7 @@ int getNextAvailableLinkIndex() {
 	return -1;
 }
 
-int getNextAvailableStreamIndex(xLinkDesc_t *link) {
+static int getNextAvailableStreamIndex(xLinkDesc_t *link) {
 	if (link == NULL)
 		return -1;
 	
@@ -327,7 +327,7 @@ int getNextAvailableStreamIndex(xLinkDesc_t *link) {
 	return -1;
 }
 
-streamDesc_t *getStreamById(void *fd, streamId_t id) {
+static streamDesc_t *getStreamById(void *fd, streamId_t id) {
 	xLinkDesc_t *link = getLink(fd);
 	ASSERT_X_LINK(link != NULL);
 	int stream;
@@ -340,7 +340,7 @@ streamDesc_t *getStreamById(void *fd, streamId_t id) {
 	return NULL;
 }
 
-streamDesc_t *getStreamByName(xLinkDesc_t *link, const char *name) {
+static streamDesc_t *getStreamByName(xLinkDesc_t *link, const char *name) {
 	ASSERT_X_LINK(link != NULL);
 	int stream;
 	for (stream = 0; stream < XLINK_MAX_STREAMS; stream++) {
@@ -353,7 +353,7 @@ streamDesc_t *getStreamByName(xLinkDesc_t *link, const char *name) {
 	return NULL;
 }
 
-void releaseStream(streamDesc_t *stream) {
+static void releaseStream(streamDesc_t *stream) {
 	if (stream && stream->id != INVALID_STREAM_ID) {
 		sem_post(&stream->sem);
 	} else {
@@ -361,7 +361,7 @@ void releaseStream(streamDesc_t *stream) {
 	}
 }
 
-streamId_t getStreamIdByName(xLinkDesc_t *link, const char *name) {
+static streamId_t getStreamIdByName(xLinkDesc_t *link, const char *name) {
 	streamDesc_t *stream = getStreamByName(link, name);
 	streamId_t id;
 	if (stream) {
@@ -372,7 +372,7 @@ streamId_t getStreamIdByName(xLinkDesc_t *link, const char *name) {
 		return INVALID_STREAM_ID;
 }
 
-streamPacketDesc_t *getPacketFromStream(streamDesc_t *stream) {
+static streamPacketDesc_t *getPacketFromStream(streamDesc_t *stream) {
 	streamPacketDesc_t *ret = NULL;
 	if (stream->availablePackets) {
 		ret = &stream->packets[stream->firstPacketUnused];
@@ -384,7 +384,7 @@ streamPacketDesc_t *getPacketFromStream(streamDesc_t *stream) {
 	return ret;
 }
 
-void deallocateStream(streamDesc_t *stream) {
+static void deallocateStream(streamDesc_t *stream) {
 	if (stream && stream->id != INVALID_STREAM_ID) {
 		if (stream->readSize) {
 			stream->readSize = 0;
@@ -393,7 +393,7 @@ void deallocateStream(streamDesc_t *stream) {
 	}
 }
 
-int releasePacketFromStream(streamDesc_t *stream, uint32_t *releasedSize) {
+static int releasePacketFromStream(streamDesc_t *stream, uint32_t *releasedSize) {
 	streamPacketDesc_t *currPack = &stream->packets[stream->firstPacket];
 	if (stream->blockedPackets == 0) {
 		mvLog(MVLOG_ERROR, "There is no packet to release\n");
@@ -413,7 +413,7 @@ int releasePacketFromStream(streamDesc_t *stream, uint32_t *releasedSize) {
 	return 0;
 }
 
-int isStreamSpaceEnoughFor(streamDesc_t *stream, uint32_t size) {
+static int isStreamSpaceEnoughFor(streamDesc_t *stream, uint32_t size) {
 	if (stream->remoteFillPacketLevel >= USB_LINK_MAX_PACKETS_PER_STREAM ||
 		stream->remoteFillLevel + size > stream->writeSize) {
 		return 0;
@@ -421,7 +421,7 @@ int isStreamSpaceEnoughFor(streamDesc_t *stream, uint32_t size) {
 		return 1;
 }
 
-int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size) {
+static int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size) {
 	if (stream->availablePackets + stream->blockedPackets < USB_LINK_MAX_PACKETS_PER_STREAM) {
 		stream->packets[stream->firstPacketFree].data = (uint8_t *)buffer;
 		stream->packets[stream->firstPacketFree].length = size;
@@ -432,7 +432,7 @@ int addNewPacketToStream(streamDesc_t *stream, void *buffer, uint32_t size) {
 	return -1;
 }
 
-streamId_t allocateNewStream(void *fd,
+static streamId_t allocateNewStream(void *fd,
   const char *name,
   uint32_t writeSize,
   uint32_t readSize,
@@ -487,7 +487,7 @@ streamId_t allocateNewStream(void *fd,
 }
 
 //this function should be called only for remote requests
-int dispatcherLocalEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response) {
+static int dispatcherLocalEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response) {
 	streamDesc_t *stream;
 	response->header.id = event->header.id;
 	switch (event->header.type) {
@@ -618,7 +618,7 @@ int dispatcherLocalEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response)
 }
 
 //this function should be called only for remote requests
-int dispatcherRemoteEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response) {
+static int dispatcherRemoteEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response) {
 	streamDesc_t *stream;
 	response->header.id = event->header.id;
 	response->header.flags.raw = 0;
@@ -791,7 +791,7 @@ int dispatcherRemoteEventGetResponse(xLinkEvent_t *event, xLinkEvent_t *response
 }
 
 //adds a new event with parameters and returns event id
-int dispatcherEventSend(xLinkEvent_t *event) {
+static int dispatcherEventSend(xLinkEvent_t *event) {
 	mvLog(MVLOG_DEBUG, "sending %d %d\n", (int) event->header.type, (int) event->header.id);
 	int rc = XLinkWrite(event->xLinkFD, &event->header, sizeof(event->header), 0);
 	if (rc < 0) {
@@ -817,7 +817,7 @@ static xLinkState_t getXLinkState(xLinkDesc_t *link) {
 	return link->peerState;
 }
 
-void dispatcherCloseLink(void *fd, int fullClose) {
+static void dispatcherCloseLink(void *fd, int fullClose) {
 	xLinkDesc_t *link = getLink(fd);
 	ASSERT_X_LINK(link != NULL);
 	if (fullClose) {
@@ -834,7 +834,7 @@ void dispatcherCloseLink(void *fd, int fullClose) {
 	}
 }
 
-void dispatcherResetDevice(void *fd) {
+static void dispatcherResetDevice(void *fd) {
 	XLinkPlatformResetRemote(fd);
 }
 
@@ -1016,7 +1016,8 @@ streamId_t XLinkOpenStream(linkId_t id, const char *name, int stream_write_size)
 // Just like open stream, when closeStream is called
 // on the local size we are resetting the writeSize
 // and on the remote side we are freeing the read buffer
-XLinkError_t XLinkCloseStream(streamId_t streamId) {
+XLinkError_t XLinkCloseStream(const streamId_t &_streamId) {
+	streamId_t streamId = _streamId;
 	linkId_t id;
 	EXTRACT_IDS(streamId, id);
 	xLinkDesc_t *link = getLinkById(id);
@@ -1033,12 +1034,11 @@ XLinkError_t XLinkCloseStream(streamId_t streamId) {
 	xLinkEvent_t *ev = dispatcherAddEvent(EVENT_LOCAL, &event);
 	dispatcherWaitEventComplete(link->fd);
 	
-	if (ev->header.flags.bitField.ack == 1)
+	if (ev->header.flags.bitField.ack == 1) {
 		return X_LINK_SUCCESS;
-	else
+	} else {
 		return X_LINK_COMMUNICATION_FAIL;
-	
-	return X_LINK_SUCCESS;
+	}
 }
 
 
@@ -1052,13 +1052,14 @@ XLinkError_t XLinkGetAvailableStreams(linkId_t id) {
 	return X_LINK_SUCCESS;
 }
 
-XLinkError_t GetDeviceName(int index, char *name, size_t &nameSize, int pid) {
-	int rc = -1;
-	if (!pid)
+static XLinkError_t GetDeviceName(int index, char *name, size_t &nameSize, int pid) {
+	int rc;
+	if (!pid) {
 		rc = XLinkPlatformGetDeviceName(index, name, nameSize);
-	else
+	} else {
 		rc = XLinkPlatformGetDeviceNameExtended(index, name, nameSize, pid);
-	
+	}
+
 	switch (rc) {
 	case X_LINK_PLATFORM_SUCCESS:
 		return X_LINK_SUCCESS;

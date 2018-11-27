@@ -581,7 +581,7 @@ public class MainActivity extends AppCompatActivity
 				// NCSをopen
 				final IDataLink dataLink;
 				try {
-					// FIXME ncsdk1.xかncsdk2.xかでデータリンクの型を変える
+					// ncsdk1.xかncsdk2.xかでデータリンクの型を変える
 					// ncsdk1.xはUsbDataLink
 					// ncsdk2.xはUsbDataLink2
 					// Stick2はncsdk2.xのみ対応なのでUsbDataLink2
